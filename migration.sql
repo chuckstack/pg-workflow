@@ -21,7 +21,7 @@ CREATE TABLE chuboe_group (
   FOREIGN KEY (chuboe_process_uu) REFERENCES chuboe_process(chuboe_process_uu)
 );
 
-CREATE TABLE chuboe_group_member (
+CREATE TABLE chuboe_group_member_lnk (
   chuboe_group_member_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_group_uu UUID,
   chuboe_user_uu UUID,
@@ -30,7 +30,7 @@ CREATE TABLE chuboe_group_member (
   UNIQUE (chuboe_group_uu, chuboe_user_uu)
 );
 
-CREATE TABLE chuboe_process_admin (
+CREATE TABLE chuboe_process_admin_lnk (
   chuboe_process_admin_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_process_uu UUID,
   chuboe_user_uu UUID,
@@ -72,7 +72,7 @@ CREATE TABLE chuboe_transition (
   FOREIGN KEY (chuboe_next_state_uu) REFERENCES chuboe_state(chuboe_state_uu)
 );
 
-CREATE TABLE chuboe_transition_action (
+CREATE TABLE chuboe_transition_action_lnk (
   chuboe_transition_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_transition_uu UUID,
   chuboe_action_uu UUID,
@@ -87,7 +87,7 @@ CREATE TABLE chuboe_target (
   description TEXT
 );
 
-CREATE TABLE chuboe_action_target (
+CREATE TABLE chuboe_action_target_lnk (
   chuboe_action_target_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_action_uu UUID,
   chuboe_target_uu UUID,
@@ -113,7 +113,7 @@ CREATE TABLE chuboe_activity (
   FOREIGN KEY (chuboe_process_uu) REFERENCES chuboe_process(chuboe_process_uu)
 );
 
-CREATE TABLE chuboe_state_activity (
+CREATE TABLE chuboe_state_activity_lnk (
   chuboe_state_activity_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_state_uu UUID,
   chuboe_activity_uu UUID,
@@ -122,7 +122,7 @@ CREATE TABLE chuboe_state_activity (
   UNIQUE (chuboe_state_uu, chuboe_activity_uu)
 );
 
-CREATE TABLE chuboe_activity_target (
+CREATE TABLE chuboe_activity_target_lnk (
   chuboe_activity_target_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_activity_uu UUID,
   chuboe_target_uu UUID,
@@ -131,7 +131,7 @@ CREATE TABLE chuboe_activity_target (
   UNIQUE (chuboe_activity_uu, chuboe_target_uu)
 );
 
-CREATE TABLE chuboe_transition_activity (
+CREATE TABLE chuboe_transition_activity_lnk (
   chuboe_transition_activity_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_activity_uu UUID,
   chuboe_transition_uu UUID,
@@ -182,7 +182,7 @@ CREATE TABLE chuboe_request_file (
   FOREIGN KEY (chuboe_user_uu) REFERENCES chuboe_user(chuboe_user_uu)
 );
 
-CREATE TABLE chuboe_request_action (
+CREATE TABLE chuboe_request_action_lnk (
   chuboe_request_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_request_uu UUID,
   chuboe_action_uu UUID,
@@ -195,7 +195,7 @@ CREATE TABLE chuboe_request_action (
   UNIQUE (chuboe_request_uu, chuboe_action_uu, chuboe_transition_uu)
 );
 
-CREATE TABLE chuboe_request_stakeholder (
+CREATE TABLE chuboe_request_stakeholder_lnk (
   chuboe_request_stakeholder_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_request_uu UUID,
   chuboe_user_uu UUID,
