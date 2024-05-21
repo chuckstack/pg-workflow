@@ -1,5 +1,5 @@
-create schema if not exists adempiere;
-set search_path = adempiere;
+create schema if not exists private;
+set search_path = private;
 
 CREATE TABLE chuboe_user (
   chuboe_user_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),

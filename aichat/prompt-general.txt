@@ -1,1 +1,3 @@
-I want you to help me design and code a postgresql and postgrest application to support creating and executing workflows in postgresql.
+I want you to help me design and code a postgresql application to support creating, managing and executing workflows in postgresql.
+There will be two ways by which users will interact with the application: 1. using sql natively and 2. using a postgrest api.
+One of the goals of the project is to design the documentation and code so that users can ask an AI for help in creating and managing workflow.
