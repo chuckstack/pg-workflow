@@ -5,25 +5,29 @@ set search_path = private;
 CREATE TABLE chuboe_user (
   chuboe_user_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   last_name VARCHAR(255) NOT NULL,
-  first_name VARCHAR(255) NOT NULL
+  first_name VARCHAR(255) NOT NULL,
+  email VARCHAR(255)
 );
 COMMENT ON TABLE chuboe_user IS 'Table that contains users of the workflow.';
 
 CREATE TABLE chuboe_state_type (
   chuboe_state_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL
+  name VARCHAR(255) NOT NULL,
+  description TEXT
 );
 COMMENT ON TABLE chuboe_state_type IS 'Table that defines the different types of states in the workflow process.';
 
 CREATE TABLE chuboe_process (
   chuboe_process_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL
+  name VARCHAR(255) NOT NULL,
+  description TEXT
 );
 COMMENT ON TABLE chuboe_process IS 'Table that holds the collection of all process data that is unique to a group of users and how they want their Requests approved';
 
 CREATE TABLE chuboe_group (
   chuboe_group_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,
+  description TEXT,
   chuboe_process_uu UUID NOT NULL,
   FOREIGN KEY (chuboe_process_uu) REFERENCES chuboe_process(chuboe_process_uu)
 );
@@ -62,7 +66,8 @@ COMMENT ON TABLE chuboe_state IS 'Table that represents the various states withi
 
 CREATE TABLE chuboe_action_type (
   chuboe_action_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL
+  name VARCHAR(255) NOT NULL,
+  description TEXT
 );
 COMMENT ON TABLE chuboe_action_type IS 'Table that defines the different types of actions that can be performed in the workflow.';
 
@@ -117,7 +122,8 @@ COMMENT ON TABLE chuboe_action_target_lnk IS 'Table that links actions to their 
 
 CREATE TABLE chuboe_activity_type (
   chuboe_activity_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL
+  name VARCHAR(255) NOT NULL,
+  description TEXT
 );
 COMMENT ON TABLE chuboe_activity_type IS 'Table that defines the different types of activities that can be performed in the workflow.';
 

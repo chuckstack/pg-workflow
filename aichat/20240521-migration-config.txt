@@ -1,0 +1,35 @@
+
+I want you to help me design and code a postgresql application to support creating, managing and executing workflows in postgresql.
+
+I am including migration-ddl.sql for your reference so that you know the current application domain.
+
+I want you to propose a new version of migration-config.sql that contains sql insert statements to meet the following criteria:
+* We need initial chuboe_state_type records. Here are the recommended names and descriptions:
+  * Start: Should only be one per process. This state is the state into which a new Request is placed when it is created.
+  * Normal: A regular state with no special designation.
+  * Complete: A state signifying that any Request in this state have completed normally.
+  * Denied: A state signifying that any Request in this state has been denied (e.g. never got started and will not be worked on).
+  * Cancelled: A state signifying that any Request in this state has been cancelled (e.g. work was started but never completed).
+* It is ok to modify (add, remove, change) the list of chuboe_state_type records based on your knowledge of workflow. Please explain your logic if you make changes.
+
+* We need initial chuboe_action_type records. Here are the recommended names and descriptions:
+  * Approve: The actioner is suggesting that the request should move to the next state.
+  * Deny: The actioner is suggesting that the request should move to the previous state.
+  * Cancel: The actioner is suggesting that the request should move to the Cancelled state in the process.
+  * Restart: The actioner suggesting that the request be moved back to the Start state in the process.
+  * Resolve: The actioner is suggesting that the request be moved all the way to the Completed state.
+* It is ok to modify (add, remove, change) the list of chuboe_action_type records based on your knowledge of workflow. Please explain your logic if you make changes.
+
+* We need initial chuboe_activity_type records. Here are the recommended names and descriptions:
+  * Add Note: Specifies that we should automatically add a note to a Request.
+  * Send Email: Specifies that we should send an email to one or more recipients.
+  * Add Stakeholders: Specifies that we should add one or more persons as Stakeholders on this request.
+  * Remove Stakeholders: Specifies that we should remove one or more stakeholders from this request.
+* It is ok to modify (add, remove, change) the list of chuboe_activity_type records based on your knowledge of workflow. Please explain your logic if you make changes.
+
+* We need initial chuboe_target records. Here are the recommended names and descriptions:
+  * Requester:
+  * Stakeholders:
+  * Group Members:
+  * Process Admins:
+* It is ok to modify (add, remove, change) the list of chuboe_target records based on your knowledge of workflow. Please explain your logic if you make changes.
