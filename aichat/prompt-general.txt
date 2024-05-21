@@ -1,3 +1,9 @@
 I want you to help me design and code a postgresql application to support creating, managing and executing workflows in postgresql.
-There will be two ways by which users will interact with the application: 1. using sql natively and 2. using a postgrest api.
-One of the goals of the project is to design the documentation and code so that users can ask an AI for help in creating and managing workflow.
+There will be two ways by which users will interact with the application: 1. using sql natively and 2. using a postgrest api build around the native sql.
+There will exist two schemas: 1. private - holding the internal representation of the workflow and 2. public - allowing users of sql and postgrest api to interact with private schema.
+One goal of the project is to maximise AI involvement in the design and development of the project.
+One goal of the project is to maximise AI to help end users design and manage workflows. Said another way, we expect an AI assistant to be able to create, manage and execute workflows upon a user's prompt.
+There are three types of workflow styles we want to support:
+  1. Rigid workflows where a request must follow a pre-defined path. This is the most popular form of workflow on the Internet.
+  2. ad-hoc workflows where a user knows exactly who is responsible for what actions and the user creates the request accordingly. This is the most common used type of workflow in the real world. The request acts like a hot potato bouncing between user and group responsibilities.
+  3. queue-based workflows where the simple existence of a non-zero result from select count(*) from some_view will prompt a user or group to action.
