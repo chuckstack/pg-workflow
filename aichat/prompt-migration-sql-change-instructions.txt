@@ -1,0 +1,4 @@
+The order of tables should not change.
+Names of the tables should not change.
+The column names and types should not change.
+The comments should not change.

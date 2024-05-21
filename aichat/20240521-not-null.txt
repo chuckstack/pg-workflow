@@ -1,0 +1,12 @@
+I want you to help me design and code a postgresql application to support creating, managing and executing workflows in postgresql.
+
+Only return code.
+Do not introduce the code.
+Do not explain your steps.
+
+The order of tables should not change.
+Names of the tables should not change.
+The column names and types should not change.
+The comments should not change.
+
+Produce a new version of the migration.sql file to set some of the columns to not null. Evaluate the design and combine your knowledge of database as well as workflow to determine which columns should be updated to reflect "not null".
