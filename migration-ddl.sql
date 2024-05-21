@@ -1,3 +1,4 @@
+-- create the ddl artifacts to track workflow
 create schema if not exists private;
 set search_path = private;
 

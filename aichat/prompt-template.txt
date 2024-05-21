@@ -1,0 +1,7 @@
+delme: inject the below file contents or delete the lines
+
+prompt-general.txt
+
+prompt-coder
+
+file-modification-instructions-here

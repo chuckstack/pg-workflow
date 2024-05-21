@@ -1,0 +1,2 @@
+-- The purpose of this file is to maintain sql scripts that create workflow configuration data to fit into tables created in migration-ddl.sql.
+-- This file should not contain sample data. Instead, it should inject all the reference records needed to start creating your first workflows.
