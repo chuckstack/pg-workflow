@@ -1,4 +1,6 @@
 -- Static data used to create workflows.
+-- Consider making some or all of these enums since code will most likey be written against these values.
+
 set search_path = private;
 
 INSERT INTO chuboe_state_type (name, description)
