@@ -1,0 +1,4 @@
+I want your help teaching a workflow admin how to use the application in migration-ddl.sql.
+Start with an overly simplified explanation of how the concept fit together.
+Then, go into more detail in a step by step process of how to design and execute their first process.
+

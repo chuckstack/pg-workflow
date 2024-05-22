@@ -1,0 +1,51 @@
+Here's an introduction for a workflow admin on how to use the application based on the provided SQL schema:
+
+Simplified Explanation:
+The workflow application allows you to design and manage processes that involve multiple states, actions, and activities. It enables you to define the flow of a process, assign users to specific groups, and track the progress of requests as they move through the defined workflow.
+
+The key components of the workflow application are:
+- Processes: A process represents a specific workflow that consists of states, transitions, actions, and activities.
+- States: States represent the different stages or steps within a process.
+- Transitions: Transitions define the movement from one state to another.
+- Actions: Actions are the tasks or operations that can be performed during a transition.
+- Activities: Activities are additional tasks or operations that can be performed within a state.
+- Users: Users are the individuals who participate in the workflow process.
+- Groups: Groups are collections of users associated with a specific process.
+- Requests: Requests are instances of a process that are initiated and tracked as they move through the workflow.
+
+Step-by-Step Process for Designing and Executing a Workflow:
+
+1. Define the Process:
+   - Create a new record in the `chuboe_process` table with a name and description for your workflow process.
+   - Assign process admins by creating records in the `chuboe_process_admin_lnk` table, linking users to the process.
+
+2. Define States:
+   - Identify the different stages or steps in your workflow process.
+   - Create records in the `chuboe_state` table for each state, specifying the state type, process, name, and description.
+
+3. Define Transitions:
+   - Determine the possible transitions between states.
+   - Create records in the `chuboe_transition` table, specifying the current state and next state for each transition.
+
+4. Define Actions:
+   - Identify the actions that can be performed during transitions.
+   - Create records in the `chuboe_action` table for each action, specifying the action type, process, name, and description.
+   - Link actions to transitions by creating records in the `chuboe_transition_action_lnk` table.
+
+5. Define Activities:
+   - Identify additional activities that can be performed within states.
+   - Create records in the `chuboe_activity` table for each activity, specifying the activity type, process, name, and description.
+   - Link activities to states by creating records in the `chuboe_state_activity_lnk` table.
+
+6. Assign Users to Groups:
+   - Create groups associated with the process by adding records to the `chuboe_group` table.
+   - Assign users to groups by creating records in the `chuboe_group_member_lnk` table.
+
+7. Execute a Request:
+   - Create a new request by inserting a record into the `chuboe_request` table, specifying the process, title, requester, and initial state.
+   - Track the progress of the request by updating the `chuboe_current_state_uu` column as it moves through the workflow.
+   - Add notes, data, and files associated with the request using the `chuboe_request_note`, `chuboe_request_data`, and `chuboe_request_file` tables.
+   - Link actions and transitions to the request using the `chuboe_request_action_lnk` table.
+   - Assign stakeholders to the request using the `chuboe_request_stakeholder_lnk` table.
+
+By following these steps and utilizing the provided database schema, you can design and execute workflow processes within the application. The schema allows for flexibility in defining states, transitions, actions, and activities, as well as managing users, groups, and requests associated with each process.

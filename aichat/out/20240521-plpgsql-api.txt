@@ -1,0 +1,141 @@
+Here are some key PostgreSQL functions, triggers, and other artifacts to help users interact with the workflow tables in a way consistent with REST concepts:
+
+1. Function to create a new process:
+
+```sql
+CREATE OR REPLACE FUNCTION private.create_process(
+  p_name VARCHAR(255),
+  p_description TEXT
+) RETURNS UUID AS $$
+DECLARE
+  v_process_uu UUID;
+BEGIN
+  INSERT INTO private.chuboe_process (name, description)
+  VALUES (p_name, p_description)
+  RETURNING chuboe_process_uu INTO v_process_uu;
+  
+  RETURN v_process_uu;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+This function allows users to create a new process by providing a name and description. It inserts the data into the `chuboe_process` table and returns the generated `chuboe_process_uu`.
+
+2. Function to create a new state:
+
+```sql
+CREATE OR REPLACE FUNCTION private.create_state(
+  p_state_type_uu UUID,
+  p_process_uu UUID,
+  p_name VARCHAR(255),
+  p_description TEXT
+) RETURNS UUID AS $$
+DECLARE
+  v_state_uu UUID;
+BEGIN
+  INSERT INTO private.chuboe_state (chuboe_state_type_uu, chuboe_process_uu, name, description)
+  VALUES (p_state_type_uu, p_process_uu, p_name, p_description)
+  RETURNING chuboe_state_uu INTO v_state_uu;
+  
+  RETURN v_state_uu;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+This function allows users to create a new state within a process by providing the state type UUID, process UUID, name, and description. It inserts the data into the `chuboe_state` table and returns the generated `chuboe_state_uu`.
+
+3. Function to create a new request:
+
+```sql
+CREATE OR REPLACE FUNCTION private.create_request(
+  p_process_uu UUID,
+  p_title VARCHAR(255),
+  p_user_uu UUID,
+  p_user_name VARCHAR(255)
+) RETURNS UUID AS $$
+DECLARE
+  v_request_uu UUID;
+  v_start_state_uu UUID;
+BEGIN
+  SELECT chuboe_state_uu INTO v_start_state_uu
+  FROM private.chuboe_state
+  WHERE chuboe_process_uu = p_process_uu
+    AND chuboe_state_type_uu = (SELECT chuboe_state_type_uu FROM private.chuboe_state_type WHERE name = 'Start');
+  
+  INSERT INTO private.chuboe_request (chuboe_process_uu, title, date_requested, chuboe_user_uu, user_name, chuboe_current_state_uu)
+  VALUES (p_process_uu, p_title, NOW(), p_user_uu, p_user_name, v_start_state_uu)
+  RETURNING chuboe_request_uu INTO v_request_uu;
+  
+  RETURN v_request_uu;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+This function allows users to create a new request within a process. It takes the process UUID, request title, user UUID, and user name as parameters. It retrieves the start state UUID based on the process UUID and inserts the request data into the `chuboe_request` table. It returns the generated `chuboe_request_uu`.
+
+4. Trigger to update request actions when a new request is created:
+
+```sql
+CREATE OR REPLACE FUNCTION private.update_request_actions()
+RETURNS TRIGGER AS $$
+BEGIN
+  INSERT INTO private.chuboe_request_action_lnk (chuboe_request_uu, chuboe_action_uu, chuboe_transition_uu, is_active, is_complete)
+  SELECT NEW.chuboe_request_uu, a.chuboe_action_uu, t.chuboe_transition_uu, TRUE, FALSE
+  FROM private.chuboe_transition t
+  JOIN private.chuboe_transition_action_lnk ta ON t.chuboe_transition_uu = ta.chuboe_transition_uu
+  JOIN private.chuboe_action a ON ta.chuboe_action_uu = a.chuboe_action_uu
+  WHERE t.chuboe_current_state_uu = NEW.chuboe_current_state_uu;
+  
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+CREATE TRIGGER update_request_actions
+AFTER INSERT ON private.chuboe_request
+FOR EACH ROW
+EXECUTE FUNCTION private.update_request_actions();
+```
+
+This trigger function is executed after a new request is inserted into the `chuboe_request` table. It inserts the corresponding request actions into the `chuboe_request_action_lnk` table based on the current state of the request and the associated transitions and actions.
+
+5. Function to perform an action on a request:
+
+```sql
+CREATE OR REPLACE FUNCTION private.perform_request_action(
+  p_request_uu UUID,
+  p_action_uu UUID
+) RETURNS VOID AS $$
+DECLARE
+  v_next_state_uu UUID;
+BEGIN
+  UPDATE private.chuboe_request_action_lnk
+  SET is_active = FALSE, is_complete = TRUE
+  WHERE chuboe_request_uu = p_request_uu AND chuboe_action_uu = p_action_uu;
+  
+  SELECT t.chuboe_next_state_uu INTO v_next_state_uu
+  FROM private.chuboe_transition t
+  JOIN private.chuboe_transition_action_lnk ta ON t.chuboe_transition_uu = ta.chuboe_transition_uu
+  JOIN private.chuboe_request r ON r.chuboe_current_state_uu = t.chuboe_current_state_uu
+  WHERE r.chuboe_request_uu = p_request_uu AND ta.chuboe_action_uu = p_action_uu;
+  
+  UPDATE private.chuboe_request
+  SET chuboe_current_state_uu = v_next_state_uu
+  WHERE chuboe_request_uu = p_request_uu;
+  
+  -- Perform any associated activities (e.g., adding notes, sending emails, updating stakeholders)
+  -- ...
+END;
+$$ LANGUAGE plpgsql;
+```
+
+This function allows users to perform an action on a request. It takes the request UUID and action UUID as parameters. It updates the `chuboe_request_action_lnk` table to mark the action as complete and inactive. It retrieves the next state UUID based on the current state and the action performed, and updates the `chuboe_request` table with the new current state. Additional activities associated with the action can be performed within this function.
+
+These are just a few examples of how you can create PostgreSQL functions, triggers, and other artifacts to support the workflow management system. The functions provide a way for users to interact with the tables using a higher-level abstraction, consistent with REST concepts.
+
+You can expose these functions through the public schema and create corresponding API endpoints using PostgREST to allow users to interact with the workflow system via a REST API.
+
+Remember to handle error cases, perform necessary validations, and implement authorization checks within the functions to ensure data integrity and security.
+
+As you continue building the system, you can add more functions and triggers to handle other aspects of the workflow, such as managing stakeholders, handling notes and files, and performing activities associated with state transitions.
+
+Please let me know if you have any further questions or if you need assistance with any specific part of the implementation.
