@@ -2,6 +2,14 @@
 
 -- considerations
 -- need concept of a resolution
+-- take note of the concept of the term journey
+-- take note of the concept of the term role
+-- need the concept of isdefault - specifically for the default state of a request
+-- consider using the term isprocessed (as opposed to iscomplete)
+-- consider the concept of a template process - when a request is created, the process artifacts are cloned along with the process_uu as well. - this may not make sense...
+-- special columns created, created_by, updated, updated_by, isactive, isdefault, isprocesses, istemplate
+-- consider creating a chuboe_system_element table to collect a unique list of columns, their descriptions and any other attribute we wish to track per column.
+
 create schema if not exists private;
 set search_path = private;
 
@@ -54,7 +62,7 @@ CREATE TABLE chuboe_state_type (
   name VARCHAR(255) NOT NULL,
   description TEXT
 );
-COMMENT ON TABLE chuboe_state_type IS 'Table that defines the different types of states of a request. The values in this table are near static, and they will not change often.';
+COMMENT ON TABLE chuboe_state_type IS 'Table that defines the types of states of a request. Note that we must first define the state types before we can define the specific states available in a process. The values in this table are near static, and they will not change often.';
 
 -- Consider making this an enum since code will most likely be written against these values.
 INSERT INTO chuboe_state_type (name, description)
@@ -74,7 +82,7 @@ CREATE TABLE chuboe_state (
   FOREIGN KEY (chuboe_state_type_uu) REFERENCES chuboe_state_type(chuboe_state_type_uu),
   FOREIGN KEY (chuboe_process_uu) REFERENCES chuboe_process(chuboe_process_uu)
 );
-COMMENT ON TABLE chuboe_state IS 'Table that represents the various states within a workflow process.';
+COMMENT ON TABLE chuboe_state IS 'Table that represents the states within a process. Note that we must first define the states of a process before we can create a request.';
 
 CREATE TABLE chuboe_request (
   chuboe_request_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -88,16 +96,46 @@ CREATE TABLE chuboe_request (
   FOREIGN KEY (chuboe_user_uu) REFERENCES chuboe_user(chuboe_user_uu),
   FOREIGN KEY (chuboe_current_state_uu) REFERENCES chuboe_state(chuboe_state_uu)
 );
-COMMENT ON TABLE chuboe_request IS 'Table that represents an instance of a process. A request is defined by its process. A request (and its assocated tables) describe all that occured to achieve the current state of an active request. A request (and its associated tables) describe what occured in a completed request. Note that the request maintains its current state.';
+COMMENT ON TABLE chuboe_request IS 'Table that represents an instance of a process. A request is defined by its process. A request (and its "request attribute tables") describe all that occured to achieve the current state of an active request and that occured in a completed request. Note that the request maintains its current state as a column in the chuboe_request table. All other request attributes are maintains in "request attribute tables".';
 
-------
+CREATE TABLE chuboe_request_note (
+  chuboe_request_note_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  chuboe_request_uu UUID NOT NULL,
+  chuboe_user_uu UUID NOT NULL,
+  note TEXT NOT NULL,
+  FOREIGN KEY (chuboe_request_uu) REFERENCES chuboe_request(chuboe_request_uu),
+  FOREIGN KEY (chuboe_user_uu) REFERENCES chuboe_user(chuboe_user_uu)
+);
+COMMENT ON TABLE chuboe_request_note IS 'Table that stores notes associated with a specific request and user. This is a request attribute table.';
+
+CREATE TABLE chuboe_request_data (
+  chuboe_request_data_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  chuboe_request_uu UUID NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  value VARCHAR(255) NOT NULL,
+  FOREIGN KEY (chuboe_request_uu) REFERENCES chuboe_request(chuboe_request_uu)
+);
+COMMENT ON TABLE chuboe_request_data IS 'Table that stores highly-variable data associated with a specific request. This is a request attribute table.';
+
+CREATE TABLE chuboe_request_file (
+  chuboe_request_file_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  chuboe_request_uu UUID NOT NULL,
+  chuboe_user_uu UUID NOT NULL,
+  date_uploaded TIMESTAMP NOT NULL,
+  file_name VARCHAR(255) NOT NULL,
+  file_content BYTEA NOT NULL,
+  mime_type VARCHAR(255) NOT NULL,
+  FOREIGN KEY (chuboe_request_uu) REFERENCES chuboe_request(chuboe_request_uu),
+  FOREIGN KEY (chuboe_user_uu) REFERENCES chuboe_user(chuboe_user_uu)
+);
+COMMENT ON TABLE chuboe_request_file IS 'Table that stores files associated with a specific request and user. This is a request attribute table.';
 
 CREATE TABLE chuboe_action_type (
   chuboe_action_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,
   description TEXT
 );
-COMMENT ON TABLE chuboe_action_type IS 'Table that defines the different types of actions that can be performed in any process. The values in this table are near static, and they will not change often.';
+COMMENT ON TABLE chuboe_action_type IS 'Table that defines the types of actions that can be performed in any process. Note that we must first define the action types before we can define the actions of a process. The values in this table are near static, and they will not change often.';
 
 -- Consider making this an enum since code will most likely be written against these values.
 INSERT INTO chuboe_action_type (name, description)
@@ -117,7 +155,17 @@ CREATE TABLE chuboe_action (
   FOREIGN KEY (chuboe_action_type_uu) REFERENCES chuboe_action_type(chuboe_action_type_uu),
   FOREIGN KEY (chuboe_process_uu) REFERENCES chuboe_process(chuboe_process_uu)
 );
-COMMENT ON TABLE chuboe_action IS 'Table that represents the actions that can be performed in a specific process. This is a request attribute.';
+COMMENT ON TABLE chuboe_action IS 'Table that represents the actions that can be performed in a specific process. This is a request attribute table.';
+
+CREATE TABLE chuboe_request_stakeholder_lnk (
+  chuboe_request_stakeholder_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  chuboe_request_uu UUID NOT NULL,
+  chuboe_user_uu UUID NOT NULL,
+  FOREIGN KEY (chuboe_request_uu) REFERENCES chuboe_request(chuboe_request_uu),
+  FOREIGN KEY (chuboe_user_uu) REFERENCES chuboe_user(chuboe_user_uu),
+  UNIQUE (chuboe_request_uu, chuboe_user_uu)
+);
+COMMENT ON TABLE chuboe_request_stakeholder_lnk IS 'Table that links a user to a request thereby promoting the user to the role of stakeholder. A stakeholder is someone with a shared interest in a request journey or resolution.  It is common for a stakeholder to request notifications when something about a request changes. This is a request attribute table.';
 
 CREATE TABLE chuboe_transition (
   chuboe_transition_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -126,8 +174,35 @@ CREATE TABLE chuboe_transition (
   FOREIGN KEY (chuboe_current_state_uu) REFERENCES chuboe_state(chuboe_state_uu),
   FOREIGN KEY (chuboe_next_state_uu) REFERENCES chuboe_state(chuboe_state_uu)
 );
-COMMENT ON TABLE chuboe_transition IS 'Table that defines the transitions between states in the workflow process.';
---Note: does this table need a link to the process for purposes of convenience? 
+COMMENT ON TABLE chuboe_transition IS 'Table that defines the transitions between states in a process. Processes represent a flow chart, and to do that we need to be able to move requests between states. A transition is a path between two states that shows how a request can travel between them. Transitions are initiated as a result of one or more actions. Transitions are unique to a process.';
+
+CREATE TABLE chuboe_activity_type (
+  chuboe_activity_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  description TEXT
+);
+COMMENT ON TABLE chuboe_activity_type IS 'Table that defines the types of activities that can result from a request transitioning from one state to another. Note that we must first define the activity types before we can define the specific activities available in a process. The values in this table are near static, and they will not change often.';
+
+-- Consider making this an enum since code will most likely be written against these values.
+INSERT INTO chuboe_activity_type (name, description)
+VALUES
+  ('Add Note', 'Specifies that we should automatically add a note to a Request.'),
+  ('Send Email', 'Specifies that we should send an email to one or more recipients.'),
+  ('Add Stakeholders', 'Specifies that we should add one or more persons as Stakeholders on this request.'),
+  ('Remove Stakeholders', 'Specifies that we should remove one or more stakeholders from this request.');
+
+CREATE TABLE chuboe_activity (
+  chuboe_activity_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  chuboe_activity_type_uu UUID NOT NULL,
+  chuboe_process_uu UUID NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  FOREIGN KEY (chuboe_activity_type_uu) REFERENCES chuboe_activity_type(chuboe_activity_type_uu),
+  FOREIGN KEY (chuboe_process_uu) REFERENCES chuboe_process(chuboe_process_uu)
+);
+COMMENT ON TABLE chuboe_activity IS 'Table that represents the activities that can be performed in a specific process. This is a request attribute table.';
+
+------
 
 CREATE TABLE chuboe_transition_action_lnk (
   chuboe_transition_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -138,7 +213,6 @@ CREATE TABLE chuboe_transition_action_lnk (
   UNIQUE (chuboe_transition_uu, chuboe_action_uu)
 );
 COMMENT ON TABLE chuboe_transition_action_lnk IS 'Table that links actions to transitions in the workflow process.';
---Note: does this table need a link to the process for purposes of convenience? 
 
 CREATE TABLE chuboe_target (
   chuboe_target_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -166,32 +240,6 @@ CREATE TABLE chuboe_action_target_lnk (
   UNIQUE (chuboe_action_uu, chuboe_target_uu)
 );
 COMMENT ON TABLE chuboe_action_target_lnk IS 'Table that links actions to their respective targets and associated groups.';
-
-CREATE TABLE chuboe_activity_type (
-  chuboe_activity_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL,
-  description TEXT
-);
-COMMENT ON TABLE chuboe_activity_type IS 'Table that defines the different types of activities that can be performed in the workflow. The values in this table are near static, and they will not change often.';
-
--- Consider making this an enum since code will most likely be written against these values.
-INSERT INTO chuboe_activity_type (name, description)
-VALUES
-  ('Add Note', 'Specifies that we should automatically add a note to a Request.'),
-  ('Send Email', 'Specifies that we should send an email to one or more recipients.'),
-  ('Add Stakeholders', 'Specifies that we should add one or more persons as Stakeholders on this request.'),
-  ('Remove Stakeholders', 'Specifies that we should remove one or more stakeholders from this request.');
-
-CREATE TABLE chuboe_activity (
-  chuboe_activity_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  chuboe_activity_type_uu UUID NOT NULL,
-  chuboe_process_uu UUID NOT NULL,
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  FOREIGN KEY (chuboe_activity_type_uu) REFERENCES chuboe_activity_type(chuboe_activity_type_uu),
-  FOREIGN KEY (chuboe_process_uu) REFERENCES chuboe_process(chuboe_process_uu)
-);
-COMMENT ON TABLE chuboe_activity IS 'Table that represents the activities that can be performed in a specific process.';
 
 CREATE TABLE chuboe_state_activity_lnk (
   chuboe_state_activity_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -225,38 +273,6 @@ CREATE TABLE chuboe_transition_activity_lnk (
 );
 COMMENT ON TABLE chuboe_transition_activity_lnk IS 'Table that links activities to transitions in the workflow process.';
 
-CREATE TABLE chuboe_request_note (
-  chuboe_request_note_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  chuboe_request_uu UUID NOT NULL,
-  chuboe_user_uu UUID NOT NULL,
-  note TEXT NOT NULL,
-  FOREIGN KEY (chuboe_request_uu) REFERENCES chuboe_request(chuboe_request_uu),
-  FOREIGN KEY (chuboe_user_uu) REFERENCES chuboe_user(chuboe_user_uu)
-);
-COMMENT ON TABLE chuboe_request_note IS 'Table that stores notes associated with a specific request and user. This is a request attribute.';
-
-CREATE TABLE chuboe_request_data (
-  chuboe_request_data_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  chuboe_request_uu UUID NOT NULL,
-  name VARCHAR(255) NOT NULL,
-  value VARCHAR(255) NOT NULL,
-  FOREIGN KEY (chuboe_request_uu) REFERENCES chuboe_request(chuboe_request_uu)
-);
-COMMENT ON TABLE chuboe_request_data IS 'Table that stores additional data associated with a specific request. This is a request attribute.';
-
-CREATE TABLE chuboe_request_file (
-  chuboe_request_file_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  chuboe_request_uu UUID NOT NULL,
-  chuboe_user_uu UUID NOT NULL,
-  date_uploaded TIMESTAMP NOT NULL,
-  file_name VARCHAR(255) NOT NULL,
-  file_content BYTEA NOT NULL,
-  mime_type VARCHAR(255) NOT NULL,
-  FOREIGN KEY (chuboe_request_uu) REFERENCES chuboe_request(chuboe_request_uu),
-  FOREIGN KEY (chuboe_user_uu) REFERENCES chuboe_user(chuboe_user_uu)
-);
-COMMENT ON TABLE chuboe_request_file IS 'Table that stores files associated with a specific request and user. This is a request attribute.';
-
 CREATE TABLE chuboe_request_action_lnk (
   chuboe_request_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_request_uu UUID NOT NULL,
@@ -271,12 +287,3 @@ CREATE TABLE chuboe_request_action_lnk (
 );
 COMMENT ON TABLE chuboe_request_action_lnk IS 'Table that links actions to requests and their respective transitions.';
 
-CREATE TABLE chuboe_request_stakeholder_lnk (
-  chuboe_request_stakeholder_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  chuboe_request_uu UUID NOT NULL,
-  chuboe_user_uu UUID NOT NULL,
-  FOREIGN KEY (chuboe_request_uu) REFERENCES chuboe_request(chuboe_request_uu),
-  FOREIGN KEY (chuboe_user_uu) REFERENCES chuboe_user(chuboe_user_uu),
-  UNIQUE (chuboe_request_uu, chuboe_user_uu)
-);
-COMMENT ON TABLE chuboe_request_stakeholder_lnk IS 'Table that links stakeholders (users) to their respective requests. This is a request attribute.';
