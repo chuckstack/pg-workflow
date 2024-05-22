@@ -130,33 +130,6 @@ CREATE TABLE chuboe_request_file (
 );
 COMMENT ON TABLE chuboe_request_file IS 'Table that stores files associated with a specific request and user. This is a request attribute table.';
 
-CREATE TABLE chuboe_action_type (
-  chuboe_action_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL,
-  description TEXT
-);
-COMMENT ON TABLE chuboe_action_type IS 'Table that defines the types of actions that can be performed in any process. Note that we must first define the action types before we can define the actions of a process. The values in this table are near static, and they will not change often.';
-
--- Consider making this an enum since code will most likely be written against these values.
-INSERT INTO chuboe_action_type (name, description)
-VALUES
-  ('Approve', 'The actioner is suggesting that the request should move to the next state.'),
-  ('Deny', 'The actioner is suggesting that the request should move to the previous state.'),
-  ('Cancel', 'The actioner is suggesting that the request should move to the Cancelled state in the process.'),
-  ('Restart', 'The actioner suggesting that the request be moved back to the Start state in the process.'),
-  ('Resolve', 'The actioner is suggesting that the request be moved all the way to the Completed state.');
-
-CREATE TABLE chuboe_action (
-  chuboe_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  chuboe_action_type_uu UUID NOT NULL,
-  chuboe_process_uu UUID NOT NULL,
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  FOREIGN KEY (chuboe_action_type_uu) REFERENCES chuboe_action_type(chuboe_action_type_uu),
-  FOREIGN KEY (chuboe_process_uu) REFERENCES chuboe_process(chuboe_process_uu)
-);
-COMMENT ON TABLE chuboe_action IS 'Table that represents the actions that can be performed in a specific process. This is a request attribute table.';
-
 CREATE TABLE chuboe_request_stakeholder_lnk (
   chuboe_request_stakeholder_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_request_uu UUID NOT NULL,
@@ -200,9 +173,55 @@ CREATE TABLE chuboe_activity (
   FOREIGN KEY (chuboe_activity_type_uu) REFERENCES chuboe_activity_type(chuboe_activity_type_uu),
   FOREIGN KEY (chuboe_process_uu) REFERENCES chuboe_process(chuboe_process_uu)
 );
-COMMENT ON TABLE chuboe_activity IS 'Table that represents the activities that can be performed in a specific process. This is a request attribute table.';
+COMMENT ON TABLE chuboe_activity IS 'Table that represents the activities that can be performed in a specific process. Activities are things that can happen as a result of a Request entering a state or following a transition. This is a request attribute table.';
 
-------
+CREATE TABLE chuboe_state_activity_lnk (
+  chuboe_state_activity_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  chuboe_state_uu UUID NOT NULL,
+  chuboe_activity_uu UUID NOT NULL,
+  FOREIGN KEY (chuboe_state_uu) REFERENCES chuboe_state(chuboe_state_uu),
+  FOREIGN KEY (chuboe_activity_uu) REFERENCES chuboe_activity(chuboe_activity_uu),
+  UNIQUE (chuboe_state_uu, chuboe_activity_uu)
+);
+COMMENT ON TABLE chuboe_state_activity_lnk IS 'Table that links activities to their respective states in a specific process. This table allows you to specify that the system should execute a specific activity as a result of entering a specific state.';
+--todo: consider adding an attribute to this table dictating if the state is the to_be_state (entering) or the from_state (exiting). Currently exiting a state is silent.
+
+CREATE TABLE chuboe_transition_activity_lnk (
+  chuboe_transition_activity_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  chuboe_activity_uu UUID NOT NULL,
+  chuboe_transition_uu UUID NOT NULL,
+  FOREIGN KEY (chuboe_activity_uu) REFERENCES chuboe_activity(chuboe_activity_uu),
+  FOREIGN KEY (chuboe_transition_uu) REFERENCES chuboe_transition(chuboe_transition_uu),
+  UNIQUE (chuboe_activity_uu, chuboe_transition_uu)
+);
+COMMENT ON TABLE chuboe_transition_activity_lnk IS 'Table that links activities to their respective transitions in a specific process. This table allows you to specify that the system should execute a specific activity as a result of performing a specific transition.';
+
+CREATE TABLE chuboe_action_type (
+  chuboe_action_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  description TEXT
+);
+COMMENT ON TABLE chuboe_action_type IS 'Table that defines the types of actions that can be performed in any process. Note that we must first define the action types before we can define the actions of a process. The values in this table are near static, and they will not change often.';
+
+-- Consider making this an enum since code will most likely be written against these values.
+INSERT INTO chuboe_action_type (name, description)
+VALUES
+  ('Approve', 'The actioner is suggesting that the request should move to the next state.'),
+  ('Deny', 'The actioner is suggesting that the request should move to the previous state.'),
+  ('Cancel', 'The actioner is suggesting that the request should move to the Cancelled state in the process.'),
+  ('Restart', 'The actioner suggesting that the request be moved back to the Start state in the process.'),
+  ('Resolve', 'The actioner is suggesting that the request be moved all the way to the Completed state.');
+
+CREATE TABLE chuboe_action (
+  chuboe_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  chuboe_action_type_uu UUID NOT NULL,
+  chuboe_process_uu UUID NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  FOREIGN KEY (chuboe_action_type_uu) REFERENCES chuboe_action_type(chuboe_action_type_uu),
+  FOREIGN KEY (chuboe_process_uu) REFERENCES chuboe_process(chuboe_process_uu)
+);
+COMMENT ON TABLE chuboe_action IS 'Table that represents the actions that can be performed in a specific process. This is a request attribute table.';
 
 CREATE TABLE chuboe_transition_action_lnk (
   chuboe_transition_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -212,7 +231,9 @@ CREATE TABLE chuboe_transition_action_lnk (
   FOREIGN KEY (chuboe_action_uu) REFERENCES chuboe_action(chuboe_action_uu),
   UNIQUE (chuboe_transition_uu, chuboe_action_uu)
 );
-COMMENT ON TABLE chuboe_transition_action_lnk IS 'Table that links actions to transitions in the workflow process.';
+COMMENT ON TABLE chuboe_transition_action_lnk IS 'Table that links actions to transitions in the workflow process. This table defines what actions can be performed to create a particular Transition';
+
+------
 
 CREATE TABLE chuboe_target (
   chuboe_target_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -241,16 +262,6 @@ CREATE TABLE chuboe_action_target_lnk (
 );
 COMMENT ON TABLE chuboe_action_target_lnk IS 'Table that links actions to their respective targets and associated groups.';
 
-CREATE TABLE chuboe_state_activity_lnk (
-  chuboe_state_activity_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  chuboe_state_uu UUID NOT NULL,
-  chuboe_activity_uu UUID NOT NULL,
-  FOREIGN KEY (chuboe_state_uu) REFERENCES chuboe_state(chuboe_state_uu),
-  FOREIGN KEY (chuboe_activity_uu) REFERENCES chuboe_activity(chuboe_activity_uu),
-  UNIQUE (chuboe_state_uu, chuboe_activity_uu)
-);
-COMMENT ON TABLE chuboe_state_activity_lnk IS 'Table that links activities to their respective states in the workflow process.';
-
 CREATE TABLE chuboe_activity_target_lnk (
   chuboe_activity_target_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_activity_uu UUID NOT NULL,
@@ -262,16 +273,6 @@ CREATE TABLE chuboe_activity_target_lnk (
   UNIQUE (chuboe_activity_uu, chuboe_target_uu)
 );
 COMMENT ON TABLE chuboe_activity_target_lnk IS 'Table that links activities to their respective targets in the workflow process.';
-
-CREATE TABLE chuboe_transition_activity_lnk (
-  chuboe_transition_activity_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  chuboe_activity_uu UUID NOT NULL,
-  chuboe_transition_uu UUID NOT NULL,
-  FOREIGN KEY (chuboe_activity_uu) REFERENCES chuboe_activity(chuboe_activity_uu),
-  FOREIGN KEY (chuboe_transition_uu) REFERENCES chuboe_transition(chuboe_transition_uu),
-  UNIQUE (chuboe_activity_uu, chuboe_transition_uu)
-);
-COMMENT ON TABLE chuboe_transition_activity_lnk IS 'Table that links activities to transitions in the workflow process.';
 
 CREATE TABLE chuboe_request_action_lnk (
   chuboe_request_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
