@@ -1,17 +1,93 @@
 -- create the ddl artifacts to track workflow
 
--- considerations
--- need concept of a resolution
--- take note of the concept of the term journey
--- take note of the concept of the term role
--- need the concept of isdefault - specifically for the default state of a request
--- consider using the term isprocessed (as opposed to iscomplete)
--- consider the concept of a template process - when a request is created, the process artifacts are cloned along with the process_uu as well. - this may not make sense...
--- special columns created, created_by, updated, updated_by, isactive, isdefault, isprocesses, istemplate
--- consider creating a chuboe_system_element table to collect a unique list of columns, their descriptions and any other attribute we wish to track per column.
+-- todo: developer note: considerations
+-- todo: developer note: need concept of a resolution
+-- todo: developer note: take note of the concept of the term journey
+-- todo: developer note: take note of the concept of the term role
+-- todo: developer note: need the concept of isdefault - specifically for the default state of a request
+-- todo: developer note: consider using the term isprocessed (as opposed to iscomplete)
+-- todo: developer note: consider the concept of a template process - when a request is created, the process artifacts are cloned along with the process_uu as well. - this may not make sense...
+-- todo: developer note: special columns created, created_by, updated, updated_by, isactive, isdefault, isprocesses, istemplate
+-- todo: developer note: consider creating a chuboe_system_element table to collect a unique list of columns, their descriptions and any other attribute we wish to track per column.
 
 create schema if not exists private;
 set search_path = private;
+
+CREATE TABLE chuboe_user (
+  chuboe_user_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  last_name VARCHAR(255) NOT NULL,
+  first_name VARCHAR(255) NOT NULL,
+  email VARCHAR(255),
+  description TEXT
+);
+COMMENT ON TABLE chuboe_user IS 'Table that contains users. Users are a cross-process represenation of actors in a workflow. Any one user can participate in multiple processes. See also: chuboe_group.';
+
+-- create a default user
+INSERT INTO chuboe_user (first_name, last_name, email, description)
+VALUES
+  ('Super', 'User', 'superuser@system.com', 'First user created');
+
+CREATE TABLE chuboe_target (
+  chuboe_target_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  description TEXT
+);
+COMMENT ON TABLE chuboe_target IS 'Table that represents the targets or recipients of actions. A target is a set of standardized, cross-process representations of groups that might exist across multiple processes. The purpose of this table is to provide developers the least number of options to code scenarios against. The values in this table are near static, and they will not change often.';
+
+-- Consider making this an enum since code will most likely be written against these values.
+INSERT INTO chuboe_target (name, description)
+VALUES
+  ('Requester', 'The user who initiated the request.'),
+  ('Stakeholders', 'The users who are stakeholders of the request.'),
+  ('Group Members', 'The users who are members of the group associated with the request.'),
+  ('Process Admins', 'The users who are administrators of the process associated with the request.');
+
+CREATE TABLE chuboe_state_type (
+  chuboe_state_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  description TEXT
+);
+COMMENT ON TABLE chuboe_state_type IS 'Table that defines the types of states of a request. State type is a set of standardized, cross-process representations of states that might exist across multiple processes. The purpose of this table is to provide developers the least number of options to code scenarios against. The values in this table are near static, and they will not change often. See also: chuboe_state.';
+
+-- Consider making this an enum since code will most likely be written against these values.
+INSERT INTO chuboe_state_type (name, description)
+VALUES
+  ('Start', 'Should only be one per process. This state is the state into which a new Request is placed when it is created.'),
+  ('Normal', 'A regular state with no special designation.'),
+  ('Complete', 'A state signifying that any Request in this state have completed normally.'),
+  ('Denied', 'A state signifying that any Request in this state has been denied (e.g. never got started and will not be worked on).'),
+  ('Cancelled', 'A state signifying that any Request in this state has been cancelled (e.g. work was started but never completed).');
+
+CREATE TABLE chuboe_activity_type (
+  chuboe_activity_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  description TEXT
+);
+COMMENT ON TABLE chuboe_activity_type IS 'Table that defines the types of activities that can result from a request transitioning from one state to another. Activity type is a set of standardized, cross-process representations of the activities that might exist across multiple processes. The purpose of this table is to provide developers the least number of options to code scenarios against. The values in this table are near static, and they will not change often. See also: chuboe_activity.';
+
+-- Consider making this an enum since code will most likely be written against these values.
+INSERT INTO chuboe_activity_type (name, description)
+VALUES
+  ('Add Note', 'Specifies that we should automatically add a note to a Request.'),
+  ('Send Email', 'Specifies that we should send an email to one or more recipients.'),
+  ('Add Stakeholders', 'Specifies that we should add one or more persons as Stakeholders on this request.'),
+  ('Remove Stakeholders', 'Specifies that we should remove one or more stakeholders from this request.');
+
+CREATE TABLE chuboe_action_type (
+  chuboe_action_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name VARCHAR(255) NOT NULL,
+  description TEXT
+);
+COMMENT ON TABLE chuboe_action_type IS 'Table that defines the types of actions that can be performed. Action type is a set of standardized, cross-process representations of the actions that might exist across multiple processes. The purpose of this table is to provide developers the least number of options to code scenarios against. The values in this table are near static, and they will not change often. See also: chuboe_action.';
+
+-- Consider making this an enum since code will most likely be written against these values.
+INSERT INTO chuboe_action_type (name, description)
+VALUES
+  ('Approve', 'The actioner is suggesting that the request should move to the next state.'),
+  ('Deny', 'The actioner is suggesting that the request should move to the previous state.'),
+  ('Cancel', 'The actioner is suggesting that the request should move to the Cancelled state in the process.'),
+  ('Restart', 'The actioner suggesting that the request be moved back to the Start state in the process.'),
+  ('Resolve', 'The actioner is suggesting that the request be moved all the way to the Completed state.');
 
 CREATE TABLE chuboe_process (
   chuboe_process_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -20,14 +96,6 @@ CREATE TABLE chuboe_process (
 );
 COMMENT ON TABLE chuboe_process IS 'Table that represents the starting point of workflow design and execution. Processes describe how to get things done and my whom. A process describes what is possible in a workflow scenario. A process acts as a hub to collect workflow data about users, requests, states, actions, and transitions. Most of the remaining workflow tables reference a process directly or indirectly.';
 
-CREATE TABLE chuboe_user (
-  chuboe_user_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  last_name VARCHAR(255) NOT NULL,
-  first_name VARCHAR(255) NOT NULL,
-  email VARCHAR(255)
-);
-COMMENT ON TABLE chuboe_user IS 'Table that contains users. Note that users exist outside of a process. Any one user can participate in multiple processes.';
-
 CREATE TABLE chuboe_group (
   chuboe_group_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,
@@ -35,7 +103,7 @@ CREATE TABLE chuboe_group (
   chuboe_process_uu UUID NOT NULL,
   FOREIGN KEY (chuboe_process_uu) REFERENCES chuboe_process(chuboe_process_uu)
 );
-COMMENT ON TABLE chuboe_group IS 'Table that represents a collection of people. Processes can be created that support both "any" an "all" scenarios. An "any" scenario is where any one member of the group can act to create succes. An "all" scenaio is where all members of the group must act to create successs.';
+COMMENT ON TABLE chuboe_group IS 'Table that represents a collection of people. Processes can be created that support both "any" an "all" scenarios. An "any" scenario is where any one member of the group can act to create succes. An "all" scenaio is where all members of the group must act to create successs. A group can also be thought of as a role where anyone in the group is assumed to be able to act in that role. There is a relationship between groups and targets. Targets are cross-process. Groups are specific to a process. Targets can be linked to process groups inside a process.';
 
 CREATE TABLE chuboe_group_member_lnk (
   chuboe_group_member_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -56,22 +124,6 @@ CREATE TABLE chuboe_process_admin_lnk (
   UNIQUE (chuboe_process_uu, chuboe_user_uu)
 );
 COMMENT ON TABLE chuboe_process_admin_lnk IS 'Table that links users to processes as someone who can administer a particular process. Admins can create, update and delete processes';
-
-CREATE TABLE chuboe_state_type (
-  chuboe_state_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL,
-  description TEXT
-);
-COMMENT ON TABLE chuboe_state_type IS 'Table that defines the types of states of a request. Note that we must first define the state types before we can define the specific states available in a process. The values in this table are near static, and they will not change often.';
-
--- Consider making this an enum since code will most likely be written against these values.
-INSERT INTO chuboe_state_type (name, description)
-VALUES
-  ('Start', 'Should only be one per process. This state is the state into which a new Request is placed when it is created.'),
-  ('Normal', 'A regular state with no special designation.'),
-  ('Complete', 'A state signifying that any Request in this state have completed normally.'),
-  ('Denied', 'A state signifying that any Request in this state has been denied (e.g. never got started and will not be worked on).'),
-  ('Cancelled', 'A state signifying that any Request in this state has been cancelled (e.g. work was started but never completed).');
 
 CREATE TABLE chuboe_state (
   chuboe_state_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -139,6 +191,7 @@ CREATE TABLE chuboe_request_stakeholder_lnk (
   UNIQUE (chuboe_request_uu, chuboe_user_uu)
 );
 COMMENT ON TABLE chuboe_request_stakeholder_lnk IS 'Table that links a user to a request thereby promoting the user to the role of stakeholder. A stakeholder is someone with a shared interest in a request journey or resolution.  It is common for a stakeholder to request notifications when something about a request changes. This is a request attribute table.';
+--todo: developer note: determine if this table is really needed. There is already a chuboe_group (role) table that can be used to create a stakeholder group.
 
 CREATE TABLE chuboe_transition (
   chuboe_transition_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -148,21 +201,6 @@ CREATE TABLE chuboe_transition (
   FOREIGN KEY (chuboe_next_state_uu) REFERENCES chuboe_state(chuboe_state_uu)
 );
 COMMENT ON TABLE chuboe_transition IS 'Table that defines the transitions between states in a process. Processes represent a flow chart, and to do that we need to be able to move requests between states. A transition is a path between two states that shows how a request can travel between them. Transitions are initiated as a result of one or more actions. Transitions are unique to a process.';
-
-CREATE TABLE chuboe_activity_type (
-  chuboe_activity_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL,
-  description TEXT
-);
-COMMENT ON TABLE chuboe_activity_type IS 'Table that defines the types of activities that can result from a request transitioning from one state to another. Note that we must first define the activity types before we can define the specific activities available in a process. The values in this table are near static, and they will not change often.';
-
--- Consider making this an enum since code will most likely be written against these values.
-INSERT INTO chuboe_activity_type (name, description)
-VALUES
-  ('Add Note', 'Specifies that we should automatically add a note to a Request.'),
-  ('Send Email', 'Specifies that we should send an email to one or more recipients.'),
-  ('Add Stakeholders', 'Specifies that we should add one or more persons as Stakeholders on this request.'),
-  ('Remove Stakeholders', 'Specifies that we should remove one or more stakeholders from this request.');
 
 CREATE TABLE chuboe_activity (
   chuboe_activity_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -196,22 +234,6 @@ CREATE TABLE chuboe_transition_activity_lnk (
 );
 COMMENT ON TABLE chuboe_transition_activity_lnk IS 'Table that links activities to their respective transitions in a specific process. This table allows you to specify that the system should execute a specific activity as a result of performing a specific transition.';
 
-CREATE TABLE chuboe_action_type (
-  chuboe_action_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL,
-  description TEXT
-);
-COMMENT ON TABLE chuboe_action_type IS 'Table that defines the types of actions that can be performed in any process. Note that we must first define the action types before we can define the actions of a process. The values in this table are near static, and they will not change often.';
-
--- Consider making this an enum since code will most likely be written against these values.
-INSERT INTO chuboe_action_type (name, description)
-VALUES
-  ('Approve', 'The actioner is suggesting that the request should move to the next state.'),
-  ('Deny', 'The actioner is suggesting that the request should move to the previous state.'),
-  ('Cancel', 'The actioner is suggesting that the request should move to the Cancelled state in the process.'),
-  ('Restart', 'The actioner suggesting that the request be moved back to the Start state in the process.'),
-  ('Resolve', 'The actioner is suggesting that the request be moved all the way to the Completed state.');
-
 CREATE TABLE chuboe_action (
   chuboe_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_action_type_uu UUID NOT NULL,
@@ -231,24 +253,7 @@ CREATE TABLE chuboe_transition_action_lnk (
   FOREIGN KEY (chuboe_action_uu) REFERENCES chuboe_action(chuboe_action_uu),
   UNIQUE (chuboe_transition_uu, chuboe_action_uu)
 );
-COMMENT ON TABLE chuboe_transition_action_lnk IS 'Table that links actions to transitions in the workflow process. This table defines what actions can be performed to create a particular Transition';
-
-------
-
-CREATE TABLE chuboe_target (
-  chuboe_target_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name VARCHAR(255) NOT NULL,
-  description TEXT
-);
-COMMENT ON TABLE chuboe_target IS 'Table that represents the targets or recipients of actions in the workflow process.';
-
--- Consider making this an enum since code will most likely be written against these values.
-INSERT INTO chuboe_target (name, description)
-VALUES
-  ('Requester', 'The user who initiated the request.'),
-  ('Stakeholders', 'The users who are stakeholders of the request.'),
-  ('Group Members', 'The users who are members of the group associated with the request.'),
-  ('Process Admins', 'The users who are administrators of the process associated with the request.');
+COMMENT ON TABLE chuboe_transition_action_lnk IS 'Table that links actions to transitions in the workflow process. This table defines what actions can be performed to instigate a particular transition';
 
 CREATE TABLE chuboe_action_target_lnk (
   chuboe_action_target_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -260,7 +265,7 @@ CREATE TABLE chuboe_action_target_lnk (
   FOREIGN KEY (chuboe_group_uu) REFERENCES chuboe_group(chuboe_group_uu),
   UNIQUE (chuboe_action_uu, chuboe_target_uu)
 );
-COMMENT ON TABLE chuboe_action_target_lnk IS 'Table that links actions to their respective targets and associated groups.';
+COMMENT ON TABLE chuboe_action_target_lnk IS 'Table that links actions to their respective targets and associated groups. This tables acts as an access list to dictate who can perform what actions. If a group is the action target, then any member of the group can perform the action for it to be valid.';
 
 CREATE TABLE chuboe_activity_target_lnk (
   chuboe_activity_target_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -272,7 +277,7 @@ CREATE TABLE chuboe_activity_target_lnk (
   FOREIGN KEY (chuboe_group_uu) REFERENCES chuboe_group(chuboe_group_uu),
   UNIQUE (chuboe_activity_uu, chuboe_target_uu)
 );
-COMMENT ON TABLE chuboe_activity_target_lnk IS 'Table that links activities to their respective targets in the workflow process.';
+COMMENT ON TABLE chuboe_activity_target_lnk IS 'Table that links activities to their respective targets in the workflow process. This tables acts as an access list to dictate who can receive what activities. If a group is an activity target, then all members of the group receive the activity (e.g. everyone in the group gets an email).';
 
 CREATE TABLE chuboe_request_action_lnk (
   chuboe_request_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -287,4 +292,3 @@ CREATE TABLE chuboe_request_action_lnk (
   UNIQUE (chuboe_request_uu, chuboe_action_uu, chuboe_transition_uu)
 );
 COMMENT ON TABLE chuboe_request_action_lnk IS 'Table that links actions to requests and their respective transitions.';
-
