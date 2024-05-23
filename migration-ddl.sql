@@ -163,7 +163,7 @@ CREATE TABLE chuboe_action (
   FOREIGN KEY (chuboe_action_type_uu) REFERENCES chuboe_action_type(chuboe_action_type_uu),
   FOREIGN KEY (chuboe_process_uu) REFERENCES chuboe_process(chuboe_process_uu)
 );
-COMMENT ON TABLE chuboe_action IS 'Table that represents the actions that can or should be performed in a specific process. The chuboe_action strattles both the concepts of "action" and "task". This is a request attribute table. This is a process attribute table.';
+COMMENT ON TABLE chuboe_action IS 'Table that represents the actions that can or should be performed in a specific process. The chuboe_action straddles both the concepts of "action" and "task". This is a request attribute table. This is a process attribute table.';
 
 CREATE TABLE chuboe_request (
   chuboe_request_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -309,4 +309,5 @@ CREATE TABLE chuboe_request_action_lnk (
   FOREIGN KEY (chuboe_transition_uu) REFERENCES chuboe_transition(chuboe_transition_uu),
   UNIQUE (chuboe_request_uu, chuboe_action_uu, chuboe_transition_uu)
 );
-COMMENT ON TABLE chuboe_request_action_lnk IS 'Table that links actions to requests and their respective transitions.';
+COMMENT ON TABLE chuboe_request_action_lnk IS 'Table that links actions to requests and their respective transitions. This is a log of all actions per transition.';
+--todo: this table will fail if a request is sent back to the original state. Consider getting rid of the unique constrait. Also consider renaming this table to chuboe_request_action_log.
