@@ -1,20 +1,17 @@
 -- create the ddl artifacts to track workflow
 
--- conventions
--- todo: developer note: special columns created, created_by, updated, updated_by, is_active, is_default, is_processes, is_template
--- represent booleans as character(1) with values of Y,N,null.
-
+-- conventions, questions, and thoughts
+-- todo: developer note: special columns created, created_by, updated, updated_by, is_active, is_default, is_processed, is_template
 -- todo: developer note: need concept of a resolution
--- todo: developer note: take note of the concept of the term journey
--- todo: developer note: take note of the concept of the term role
--- todo: developer note: need the concept of isdefault - specifically for the default state of a request
--- todo: developer note: consider using the term isprocessed (as opposed to iscomplete)
--- todo: developer note: consider the concept of a template process - when a request is created, the process artifacts are cloned along with the process_uu as well. - this may not make sense...
--- todo: developer note: consider creating a chuboe_system_element table to collect a unique list of columns, their descriptions and any other attribute we wish to track per column.
--- todo: developer note: consider adding a link table between groups and targets. This allows the process admin the ability to hard-code people (as opposed to code deriving the user based on coded rules). 
+-- todo: developer note: take note of the concept of the term role - group and role seems to serve a similar purpose.
+-- todo: developer note: need the concept of is_default - specifically for the default state of a request
+-- todo: developer note: consider the concept of a is_template process - when a request is created, the process artifacts are cloned along with the process_uu as well. - this may not make sense...
+-- todo: developer note: consider creating a chuboe_system_element table to collect a unique list of columns, their descriptions and any other attribute we wish to track per column. Consider doing the same for tables. Allow for markdown in description.
 -- todo: developer note: needs index optimization
 -- todo: developer note: needs cascade FK types - needs to be explicitely stated.
 -- todo: developer note: chuboe_action seems to be a mix between action and task (traditional workflow term)
+-- todo: developer note: everything needs an is_active to prevent deletes.
+-- todo: developer note: consider adding search_key to every primary table (non-link-table) - this gives users the ability to create short codes for records without needing to spell out the full name or knowing the uuid
 
 --possible improvements
 -- There is no explicit concept of a "task" or "work item" that represents an assignable unit of work within a workflow.
@@ -24,9 +21,6 @@
 -- Escalation and reminders: Mechanisms to escalate overdue tasks or send reminders to users.
 -- Audit trail and history: Tracking and storing the complete history of a request, including all state changes, actions, and user interactions.
 -- Reporting and analytics: Provisions for generating reports and analyzing workflow metrics and performance.
-
-
-
 
 create schema if not exists private;
 set search_path = private;
@@ -126,7 +120,7 @@ CREATE TABLE chuboe_group (
   chuboe_process_uu UUID NOT NULL,
   FOREIGN KEY (chuboe_process_uu) REFERENCES chuboe_process(chuboe_process_uu)
 );
-COMMENT ON TABLE chuboe_group IS 'Table that represents a collection of people. Processes can be created that support both "any" an "all" scenarios. An "any" scenario is where any one member of the group can act to create succes. An "all" scenaio is where all members of the group must act to create successs. A group can also be thought of as a role where anyone in the group is assumed to be able to act in that role. There is a relationship between groups and targets. Targets are cross-process. Groups are specific to a process. Targets can be linked to process groups inside a process.';
+COMMENT ON TABLE chuboe_group IS 'Table that represents a collection of people. Processes can be created that support both "any" an "all" scenarios. An "any" scenario is where any one member of the group can act to create succes. An "all" scenaio is where all members of the group must act to create successs. A group can also be thought of as a role where anyone in the group is assumed to be able to act in that role. There is a relationship between groups and targets. Targets are cross-process. Groups are specific to a process. Targets can be linked to process groups inside a process. This is a process attribute table.';
 
 CREATE TABLE chuboe_group_member_lnk (
   chuboe_group_member_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -137,6 +131,7 @@ CREATE TABLE chuboe_group_member_lnk (
   UNIQUE (chuboe_group_uu, chuboe_user_uu)
 );
 COMMENT ON TABLE chuboe_group_member_lnk IS 'Table that links users to a process group.';
+--todo: should members be added at the process level or the request level or both? Consider adding a chuboe_request_uu column to identify if the link was established at the request level. If this change is made, move this table definition below the chuboe_request table definition.
 
 CREATE TABLE chuboe_process_admin_lnk (
   chuboe_process_admin_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -157,7 +152,7 @@ CREATE TABLE chuboe_state (
   FOREIGN KEY (chuboe_state_type_uu) REFERENCES chuboe_state_type(chuboe_state_type_uu),
   FOREIGN KEY (chuboe_process_uu) REFERENCES chuboe_process(chuboe_process_uu)
 );
-COMMENT ON TABLE chuboe_state IS 'Table that represents the states within a process. Note that we must first define the states of a process before we can create a request.';
+COMMENT ON TABLE chuboe_state IS 'Table that represents the states within a process. Note that we must first define the states of a process before we can create a request. This is a process attribute table.';
 
 CREATE TABLE chuboe_action (
   chuboe_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -168,7 +163,7 @@ CREATE TABLE chuboe_action (
   FOREIGN KEY (chuboe_action_type_uu) REFERENCES chuboe_action_type(chuboe_action_type_uu),
   FOREIGN KEY (chuboe_process_uu) REFERENCES chuboe_process(chuboe_process_uu)
 );
-COMMENT ON TABLE chuboe_action IS 'Table that represents the actions that can or should be performed in a specific process. The chuboe_action strattles both the concepts of "action" and "task". This is a request attribute table.';
+COMMENT ON TABLE chuboe_action IS 'Table that represents the actions that can or should be performed in a specific process. The chuboe_action strattles both the concepts of "action" and "task". This is a request attribute table. This is a process attribute table.';
 
 CREATE TABLE chuboe_request (
   chuboe_request_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -224,7 +219,7 @@ CREATE TABLE chuboe_request_stakeholder_lnk (
   FOREIGN KEY (chuboe_user_uu) REFERENCES chuboe_user(chuboe_user_uu),
   UNIQUE (chuboe_request_uu, chuboe_user_uu)
 );
-COMMENT ON TABLE chuboe_request_stakeholder_lnk IS 'Table that links a user to a request thereby promoting the user to the role of stakeholder. A stakeholder is someone with a shared interest in a request journey or resolution.  It is common for a stakeholder to request notifications when something about a request changes. This is a request attribute table.';
+COMMENT ON TABLE chuboe_request_stakeholder_lnk IS 'Table that links a user to a request thereby promoting the user to the role of stakeholder. A stakeholder is someone with a shared interest in a request life-cycle or resolution.  It is common for a stakeholder to request notifications when something about a request changes. This is a request attribute table.';
 --todo: developer note: determine if this table is really needed. There is already a chuboe_group (role) table that can be used to create a stakeholder group.
 
 CREATE TABLE chuboe_transition (
@@ -308,7 +303,7 @@ CREATE TABLE chuboe_request_action_lnk (
   chuboe_action_uu UUID NOT NULL,
   chuboe_transition_uu UUID NOT NULL,
   is_active BOOLEAN NOT NULL,
-  is_complete BOOLEAN NOT NULL,
+  is_processed BOOLEAN NOT NULL,
   FOREIGN KEY (chuboe_request_uu) REFERENCES chuboe_request(chuboe_request_uu),
   FOREIGN KEY (chuboe_action_uu) REFERENCES chuboe_action(chuboe_action_uu),
   FOREIGN KEY (chuboe_transition_uu) REFERENCES chuboe_transition(chuboe_transition_uu),

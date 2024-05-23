@@ -9,6 +9,7 @@ There are three types of workflow styles we want to support:
   1. Traditional workflow: where a request must follow a pre-defined path. This is the most popular form of workflow on the Internet.
   2. Ad-hoc workflow: where a user knows exactly who is responsible for what actions and the user creates the request accordingly. This is the most common used type of workflow in the real world. The request acts like a hot potato bouncing between user and group responsibilities.
   3. queue-based workflows where the simple existence of a non-zero result from select count(*) from some_view will prompt a user or group to action.
+  4. checklists - just considering
 
 # Traditional Workflow - Requests, States, Transitions, Actions
 
