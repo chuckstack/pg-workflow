@@ -12,6 +12,21 @@
 -- todo: developer note: consider the concept of a template process - when a request is created, the process artifacts are cloned along with the process_uu as well. - this may not make sense...
 -- todo: developer note: consider creating a chuboe_system_element table to collect a unique list of columns, their descriptions and any other attribute we wish to track per column.
 -- todo: developer note: consider adding a link table between groups and targets. This allows the process admin the ability to hard-code people (as opposed to code deriving the user based on coded rules). 
+-- todo: developer note: needs index optimization
+-- todo: developer note: needs cascade FK types - needs to be explicitely stated.
+-- todo: developer note: chuboe_action seems to be a mix between action and task (traditional workflow term)
+
+--possible improvements
+-- There is no explicit concept of a "task" or "work item" that represents an assignable unit of work within a workflow.
+-- The model lacks a way to define and store complex business rules or conditions that govern the workflow transitions.
+-- There is no mechanism to handle parallel or concurrent activities within a workflow.
+-- Workflow versioning: The ability to manage multiple versions of a workflow process and handle ongoing requests during process updates.
+-- Escalation and reminders: Mechanisms to escalate overdue tasks or send reminders to users.
+-- Audit trail and history: Tracking and storing the complete history of a request, including all state changes, actions, and user interactions.
+-- Reporting and analytics: Provisions for generating reports and analyzing workflow metrics and performance.
+
+
+
 
 create schema if not exists private;
 set search_path = private;
@@ -80,22 +95,26 @@ VALUES
 CREATE TABLE chuboe_action_type (
   chuboe_action_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,
+  is_parallel_action BOOLEAN DEFAULT FALSE, -- if true, then all actions must be active and complete to transition to next state. All actions must be of the same action type => is_parallel_action=TRUE. This concept represents parallel task management. Need to see if this concept is consistent with multiple actions of the same state having transitions to differing states. todo...
   description TEXT
 );
 COMMENT ON TABLE chuboe_action_type IS 'Table that defines the types of actions that can be performed. Action type is a set of standardized, cross-process representations of the actions that might exist across multiple processes. The purpose of this table is to provide developers the least number of options to code scenarios against. The values in this table are near static, and they will not change often. See also: chuboe_action.';
 
 -- Consider making this an enum since code will most likely be written against these values.
-INSERT INTO chuboe_action_type (name, description)
+INSERT INTO chuboe_action_type (name, description, is_parallel_action)
 VALUES
-  ('Approve', 'The actioner is suggesting that the request should move to the next state.'),
-  ('Deny', 'The actioner is suggesting that the request should move to the previous state.'),
-  ('Cancel', 'The actioner is suggesting that the request should move to the Cancelled state in the process.'),
-  ('Restart', 'The actioner suggesting that the request be moved back to the Start state in the process.'),
-  ('Resolve', 'The actioner is suggesting that the request be moved all the way to the Completed state.');
+  ('Approve', 'The actioner is suggesting that the request should move to the next state.',false),
+  ('Deny', 'The actioner is suggesting that the request should move to the previous state.',false),
+  ('Execute', 'The actioner must perform a task then is suggesting that the request should move to the previous state.',false),
+  ('Execute Parallel', 'The actioners must perform all tasks then is suggesting that the request should move to the previous state.',true),
+  ('Cancel', 'The actioner is suggesting that the request should move to the Cancelled state in the process.',false),
+  ('Restart', 'The actioner suggesting that the request be moved back to the Start state in the process.',false),
+  ('Resolve', 'The actioner is suggesting that the request be moved all the way to the Completed state.',false);
 
 CREATE TABLE chuboe_process (
   chuboe_process_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,
+  is_processed BOOLEAN NOT NULL, -- if true, process and process attribute tables cannot be modified, to make changes, clone the process.
   description TEXT
 );
 COMMENT ON TABLE chuboe_process IS 'Table that represents the starting point of workflow design and execution. Processes describe how to get things done and my whom. A process describes what is possible in a workflow scenario. A process acts as a hub to collect workflow data about users, requests, states, actions, and transitions. Most of the remaining workflow tables reference a process directly or indirectly.';
@@ -139,6 +158,17 @@ CREATE TABLE chuboe_state (
   FOREIGN KEY (chuboe_process_uu) REFERENCES chuboe_process(chuboe_process_uu)
 );
 COMMENT ON TABLE chuboe_state IS 'Table that represents the states within a process. Note that we must first define the states of a process before we can create a request.';
+
+CREATE TABLE chuboe_action (
+  chuboe_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  chuboe_action_type_uu UUID NOT NULL,
+  chuboe_process_uu UUID NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  FOREIGN KEY (chuboe_action_type_uu) REFERENCES chuboe_action_type(chuboe_action_type_uu),
+  FOREIGN KEY (chuboe_process_uu) REFERENCES chuboe_process(chuboe_process_uu)
+);
+COMMENT ON TABLE chuboe_action IS 'Table that represents the actions that can or should be performed in a specific process. The chuboe_action strattles both the concepts of "action" and "task". This is a request attribute table.';
 
 CREATE TABLE chuboe_request (
   chuboe_request_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -237,17 +267,6 @@ CREATE TABLE chuboe_transition_activity_lnk (
   UNIQUE (chuboe_activity_uu, chuboe_transition_uu)
 );
 COMMENT ON TABLE chuboe_transition_activity_lnk IS 'Table that links activities to their respective transitions in a specific process. This table allows you to specify that the system should execute a specific activity as a result of performing a specific transition.';
-
-CREATE TABLE chuboe_action (
-  chuboe_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  chuboe_action_type_uu UUID NOT NULL,
-  chuboe_process_uu UUID NOT NULL,
-  name VARCHAR(255) NOT NULL,
-  description TEXT,
-  FOREIGN KEY (chuboe_action_type_uu) REFERENCES chuboe_action_type(chuboe_action_type_uu),
-  FOREIGN KEY (chuboe_process_uu) REFERENCES chuboe_process(chuboe_process_uu)
-);
-COMMENT ON TABLE chuboe_action IS 'Table that represents the actions that can be performed in a specific process. This is a request attribute table.';
 
 CREATE TABLE chuboe_transition_action_lnk (
   chuboe_transition_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),

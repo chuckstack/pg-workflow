@@ -1,0 +1,4 @@
+I want you to objectively evaluate table structure of migration-ddl.sql against your knowledge of workflow management and workflow best practices. My question is: does this design resemble best practices? Here are a couple of other questions to consider:
+Is the data model functionally complete?
+What concepts are missing?
+Does it use the correct terminology?
