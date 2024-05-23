@@ -1,0 +1,95 @@
+Here's an example PostgreSQL function to create a `chuboe_request` and its associated details, along with the necessary triggers:
+
+```sql
+-- Function to create a chuboe_request
+CREATE OR REPLACE FUNCTION create_chuboe_request(
+    p_process_name VARCHAR,
+    p_title VARCHAR,
+    p_requester_email VARCHAR,
+    p_initial_state_name VARCHAR
+)
+RETURNS VOID AS $$
+DECLARE
+    v_process_uu UUID;
+    v_requester_uu UUID;
+    v_initial_state_uu UUID;
+    v_request_uu UUID;
+BEGIN
+    -- Get the process UUID based on the process name
+    SELECT chuboe_process_uu INTO v_process_uu
+    FROM chuboe_process
+    WHERE name = p_process_name;
+
+    -- Get the requester UUID based on the requester email
+    SELECT chuboe_user_uu INTO v_requester_uu
+    FROM chuboe_user
+    WHERE email = p_requester_email;
+
+    -- Get the initial state UUID based on the state name and process UUID
+    SELECT chuboe_state_uu INTO v_initial_state_uu
+    FROM chuboe_state
+    WHERE name = p_initial_state_name AND chuboe_process_uu = v_process_uu;
+
+    -- Insert a new request
+    INSERT INTO chuboe_request (chuboe_process_uu, title, date_requested, chuboe_user_uu, user_name, chuboe_current_state_uu)
+    VALUES (v_process_uu, p_title, NOW(), v_requester_uu, (SELECT CONCAT(first_name, ' ', last_name) FROM chuboe_user WHERE chuboe_user_uu = v_requester_uu), v_initial_state_uu)
+    RETURNING chuboe_request_uu INTO v_request_uu;
+
+    -- Add the requester as a stakeholder
+    INSERT INTO chuboe_request_stakeholder_lnk (chuboe_request_uu, chuboe_user_uu)
+    VALUES (v_request_uu, v_requester_uu);
+
+    -- Add an initial note to the request
+    INSERT INTO chuboe_request_note (chuboe_request_uu, chuboe_user_uu, note)
+    VALUES (v_request_uu, v_requester_uu, 'Request created');
+END;
+$$ LANGUAGE plpgsql;
+```
+
+This function takes the process name, request title, requester email, and initial state name as parameters. It performs the following steps:
+
+1. Retrieves the process UUID based on the provided process name.
+2. Retrieves the requester UUID based on the provided requester email.
+3. Retrieves the initial state UUID based on the provided state name and process UUID.
+4. Inserts a new request into the `chuboe_request` table with the retrieved values.
+5. Adds the requester as a stakeholder by inserting a record into the `chuboe_request_stakeholder_lnk` table.
+6. Adds an initial note to the request by inserting a record into the `chuboe_request_note` table.
+
+Now, let's create a trigger to automatically insert a record into the `chuboe_request_action_log` table when a new request is created:
+
+```sql
+-- Trigger function to log request creation
+CREATE OR REPLACE FUNCTION log_request_creation()
+RETURNS TRIGGER AS $$
+BEGIN
+    -- Insert a record into the chuboe_request_action_log table
+    INSERT INTO chuboe_request_action_log (chuboe_request_uu, chuboe_action_uu, chuboe_transition_uu, is_active, is_processed)
+    VALUES (NEW.chuboe_request_uu, NULL, NULL, true, false);
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to log request creation
+CREATE TRIGGER tr_log_request_creation
+AFTER INSERT ON chuboe_request
+FOR EACH ROW
+EXECUTE FUNCTION log_request_creation();
+```
+
+This trigger function logs the creation of a new request by inserting a record into the `chuboe_request_action_log` table. The trigger is defined to fire after each row insertion on the `chuboe_request` table.
+
+With these functions and triggers in place, you can create a new request by calling the `create_chuboe_request` function:
+
+```sql
+SELECT create_chuboe_request(
+    'Employee Leave Request',
+    'John Doe Leave Request',
+    'john.doe@example.com',
+    'New Request'
+);
+```
+
+This will create a new request for the 'Employee Leave Request' process, with the title 'John Doe Leave Request', requested by the user with email 'john.doe@example.com', and set the initial state to 'New Request'. It will also add the requester as a stakeholder, insert an initial note, and log the request creation in the `chuboe_request_action_log` table.
+
+You can further enhance the functions and triggers based on your specific requirements and add more functionality as needed.

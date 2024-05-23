@@ -1,0 +1,9 @@
+When creating example, please follow a structure similar to this:
+
+1. describe some action to be taken to accomplish some goal
+
+...include some code or instructions here...
+
+Discussion: discuss why this step matters and how it relates to other steps
+
+2. ...

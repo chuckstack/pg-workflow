@@ -1,26 +1,8 @@
--- create the ddl artifacts to track workflow
+-- The purpose of this file is to populate a newly created database is the artifacts needed to create, maintain and execute workflows.
+-- Great care has been given to create documentation in the form of table comments. If at any time the comments can be improved, please recommend improvements.
+-- Great care has been given to sequence the tables in an order that both 1. works as a sql script and 2. aids users in understanding the natural order of how records are created.
+-- When using this file to create examples, tools or interactions, ignore all todo statements.
 
--- conventions, questions, and thoughts
--- todo: developer note: special columns created, created_by, updated, updated_by, is_active, is_default, is_processed, is_template
--- todo: developer note: need concept of a resolution
--- todo: developer note: take note of the concept of the term role - group and role seems to serve a similar purpose.
--- todo: developer note: need the concept of is_default - specifically for the default state of a request
--- todo: developer note: consider the concept of a is_template process - when a request is created, the process artifacts are cloned along with the process_uu as well. - this may not make sense...
--- todo: developer note: consider creating a chuboe_system_element table to collect a unique list of columns, their descriptions and any other attribute we wish to track per column. Consider doing the same for tables. Allow for markdown in description.
--- todo: developer note: needs index optimization
--- todo: developer note: needs cascade FK types - needs to be explicitely stated.
--- todo: developer note: chuboe_action seems to be a mix between action and task (traditional workflow term)
--- todo: developer note: everything needs an is_active to prevent deletes.
--- todo: developer note: consider adding search_key to every primary table (non-link-table) - this gives users the ability to create short codes for records without needing to spell out the full name or knowing the uuid
-
---possible improvements
--- There is no explicit concept of a "task" or "work item" that represents an assignable unit of work within a workflow.
--- The model lacks a way to define and store complex business rules or conditions that govern the workflow transitions.
--- There is no mechanism to handle parallel or concurrent activities within a workflow.
--- Workflow versioning: The ability to manage multiple versions of a workflow process and handle ongoing requests during process updates.
--- Escalation and reminders: Mechanisms to escalate overdue tasks or send reminders to users.
--- Audit trail and history: Tracking and storing the complete history of a request, including all state changes, actions, and user interactions.
--- Reporting and analytics: Provisions for generating reports and analyzing workflow metrics and performance.
 
 create schema if not exists private;
 set search_path = private;
@@ -92,10 +74,11 @@ VALUES
 CREATE TABLE chuboe_action_type (
   chuboe_action_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,
-  is_parallel_action BOOLEAN DEFAULT FALSE, -- if true, then all actions must be active and complete to transition to next state. All actions must be of the same action type => is_parallel_action=TRUE. This concept represents parallel task management. Need to see if this concept is consistent with multiple actions of the same state having transitions to differing states. todo...
+  is_parallel_action BOOLEAN DEFAULT FALSE, 
   description TEXT
 );
 COMMENT ON TABLE chuboe_action_type IS 'Table that defines the types of actions that can be performed. Action type is a set of standardized, cross-process representations of the actions that might exist across multiple processes. The purpose of this table is to provide developers the least number of options to code scenarios against. The values in this table are near static, and they will not change often. See also: chuboe_action.';
+-- todo: is_parallel_action => if true, then all actions must be active and complete to transition to next state. All actions must be of the same action type => is_parallel_action=TRUE. This concept represents parallel task management. Need to see if this concept is consistent with multiple actions of the same state having transitions to differing states.
 
 -- Consider making this an enum since code will most likely be written against these values.
 -- Here are reference values
@@ -182,6 +165,7 @@ CREATE TABLE chuboe_request (
   FOREIGN KEY (chuboe_current_state_uu) REFERENCES chuboe_state(chuboe_state_uu)
 );
 COMMENT ON TABLE chuboe_request IS 'Table that represents an instance of a process. A request is defined by its process. A request (and its "request attribute tables") describe all that occured to achieve the current state of an active request and that occured in a completed request. Note that the request maintains its current state as a column in the chuboe_request table. All other request attributes are maintains in "request attribute tables".';
+--todo: the user_name column does not make any sense - or is not that useful
 
 CREATE TABLE chuboe_request_note (
   chuboe_request_note_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -301,7 +285,7 @@ CREATE TABLE chuboe_activity_target_lnk (
 );
 COMMENT ON TABLE chuboe_activity_target_lnk IS 'Table that links activities to their respective targets in the workflow process. This tables acts as an access list to dictate who can receive what activities. If a group is an activity target, then all members of the group receive the activity (e.g. everyone in the group gets an email).';
 
-CREATE TABLE chuboe_request_action_lnk (
+CREATE TABLE chuboe_request_action_log (
   chuboe_request_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_request_uu UUID NOT NULL,
   chuboe_action_uu UUID NOT NULL,
@@ -310,8 +294,79 @@ CREATE TABLE chuboe_request_action_lnk (
   is_processed BOOLEAN NOT NULL,
   FOREIGN KEY (chuboe_request_uu) REFERENCES chuboe_request(chuboe_request_uu),
   FOREIGN KEY (chuboe_action_uu) REFERENCES chuboe_action(chuboe_action_uu),
-  FOREIGN KEY (chuboe_transition_uu) REFERENCES chuboe_transition(chuboe_transition_uu),
-  UNIQUE (chuboe_request_uu, chuboe_action_uu, chuboe_transition_uu)
+  FOREIGN KEY (chuboe_transition_uu) REFERENCES chuboe_transition(chuboe_transition_uu)
 );
-COMMENT ON TABLE chuboe_request_action_lnk IS 'Table that links actions to requests and their respective transitions. This is a log of all actions per transition.';
---todo: this table will fail if a request is sent back to the original state. Consider getting rid of the unique constrait. Also consider renaming this table to chuboe_request_action_log.
+COMMENT ON TABLE chuboe_request_action_log IS 'Table that links actions to requests and their respective transitions. This is both 1. a record of all non-processed actions, and 2. a log of all actions per transition.';
+
+-- Function to create a chuboe_request
+CREATE OR REPLACE FUNCTION create_chuboe_request(
+    p_process_name VARCHAR,
+    p_title VARCHAR,
+    p_requester_email VARCHAR,
+    p_initial_state_name VARCHAR
+)
+RETURNS VOID AS $$
+DECLARE
+    v_process_uu UUID;
+    v_requester_uu UUID;
+    v_initial_state_uu UUID;
+    v_request_uu UUID;
+BEGIN
+    -- Get the process UUID based on the process name
+    SELECT chuboe_process_uu INTO v_process_uu
+    FROM chuboe_process
+    WHERE name = p_process_name;
+
+    -- Get the requester UUID based on the requester email
+    SELECT chuboe_user_uu INTO v_requester_uu
+    FROM chuboe_user
+    WHERE email = p_requester_email;
+
+    -- Get the initial state UUID based on the state name and process UUID
+    SELECT chuboe_state_uu INTO v_initial_state_uu
+    FROM chuboe_state
+    WHERE name = p_initial_state_name AND chuboe_process_uu = v_process_uu;
+
+    -- Insert a new request
+    INSERT INTO chuboe_request (chuboe_process_uu, title, date_requested, chuboe_user_uu, user_name, chuboe_current_state_uu)
+    VALUES (v_process_uu, p_title, NOW(), v_requester_uu, (SELECT CONCAT(first_name, ' ', last_name) FROM chuboe_user WHERE chuboe_user_uu = v_requester_uu), v_initial_state_uu)
+    RETURNING chuboe_request_uu INTO v_request_uu;
+
+    -- Add the requester as a stakeholder
+    INSERT INTO chuboe_request_stakeholder_lnk (chuboe_request_uu, chuboe_user_uu)
+    VALUES (v_request_uu, v_requester_uu);
+
+    -- Add an initial note to the request
+    INSERT INTO chuboe_request_note (chuboe_request_uu, chuboe_user_uu, note)
+    VALUES (v_request_uu, v_requester_uu, 'Request created');
+END;
+$$ LANGUAGE plpgsql;
+--todo:make the following changes:
+---request user_name needs to go away
+---needs a default state
+---title should be optional - auto-created if not specified
+
+
+--todo: consider something like the following:
+---- Trigger function to log request creation
+--CREATE OR REPLACE FUNCTION log_request_creation()
+--RETURNS TRIGGER AS $$
+--BEGIN
+--    -- Insert a record into the chuboe_request_action_log table
+--    INSERT INTO chuboe_request_action_log (chuboe_request_uu, chuboe_action_uu, chuboe_transition_uu, is_active, is_processed)
+--    VALUES (NEW.chuboe_request_uu, NULL, NULL, true, false);
+--
+--    RETURN NEW;
+--END;
+--$$ LANGUAGE plpgsql;
+--
+---- Trigger to log request creation
+--CREATE TRIGGER tr_log_request_creation
+--AFTER INSERT ON chuboe_request
+--FOR EACH ROW
+--EXECUTE FUNCTION log_request_creation();
+
+--Issues with the above:
+---does not execute because of non-null constraint
+---insert statement hard-codes null on important columns
+---needs more thought...

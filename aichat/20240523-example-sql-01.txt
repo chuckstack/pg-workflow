@@ -1,0 +1,11 @@
+I want you to help me finish the employee leave example.
+We will take this one step at a time.
+
+To help make this as easy as possible, I will upload files for your reference.
+1. an example of how to structure example response
+2. process admin work instructions
+3. the migration-ddl script that creates the workflow database
+4. the example employee-leave.sql that we have created thus far
+
+The next goal is to create the sql statement to insert a chuboe_request record.
+I will test your response against my database, then I will ask agian for the next step.
