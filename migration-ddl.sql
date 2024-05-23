@@ -48,6 +48,7 @@ CREATE TABLE chuboe_target (
 COMMENT ON TABLE chuboe_target IS 'Table that represents the targets or recipients of actions. A target is a set of standardized, cross-process representations of groups that might exist across multiple processes. The purpose of this table is to provide developers the least number of options to code scenarios against. The values in this table are near static, and they will not change often.';
 
 -- Consider making this an enum since code will most likely be written against these values.
+-- Here are reference values
 INSERT INTO chuboe_target (name, description)
 VALUES
   ('Requester', 'The user who initiated the request.'),
@@ -63,6 +64,7 @@ CREATE TABLE chuboe_state_type (
 COMMENT ON TABLE chuboe_state_type IS 'Table that defines the types of states of a request. State type is a set of standardized, cross-process representations of states that might exist across multiple processes. The purpose of this table is to provide developers the least number of options to code scenarios against. The values in this table are near static, and they will not change often. See also: chuboe_state.';
 
 -- Consider making this an enum since code will most likely be written against these values.
+-- Here are reference values
 INSERT INTO chuboe_state_type (name, description)
 VALUES
   ('Start', 'Should only be one per process. This state is the state into which a new Request is placed when it is created.'),
@@ -79,6 +81,7 @@ CREATE TABLE chuboe_activity_type (
 COMMENT ON TABLE chuboe_activity_type IS 'Table that defines the types of activities that can result from a request transitioning from one state to another. Activity type is a set of standardized, cross-process representations of the activities that might exist across multiple processes. The purpose of this table is to provide developers the least number of options to code scenarios against. The values in this table are near static, and they will not change often. See also: chuboe_activity.';
 
 -- Consider making this an enum since code will most likely be written against these values.
+-- Here are reference values
 INSERT INTO chuboe_activity_type (name, description)
 VALUES
   ('Add Note', 'Specifies that we should automatically add a note to a Request.'),
@@ -95,6 +98,7 @@ CREATE TABLE chuboe_action_type (
 COMMENT ON TABLE chuboe_action_type IS 'Table that defines the types of actions that can be performed. Action type is a set of standardized, cross-process representations of the actions that might exist across multiple processes. The purpose of this table is to provide developers the least number of options to code scenarios against. The values in this table are near static, and they will not change often. See also: chuboe_action.';
 
 -- Consider making this an enum since code will most likely be written against these values.
+-- Here are reference values
 INSERT INTO chuboe_action_type (name, description, is_parallel_action)
 VALUES
   ('Approve', 'The actioner is suggesting that the request should move to the next state.',false),
