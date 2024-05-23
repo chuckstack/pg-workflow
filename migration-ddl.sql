@@ -1,14 +1,17 @@
 -- create the ddl artifacts to track workflow
 
--- todo: developer note: considerations
+-- conventions
+-- todo: developer note: special columns created, created_by, updated, updated_by, is_active, is_default, is_processes, is_template
+-- represent booleans as character(1) with values of Y,N,null.
+
 -- todo: developer note: need concept of a resolution
 -- todo: developer note: take note of the concept of the term journey
 -- todo: developer note: take note of the concept of the term role
 -- todo: developer note: need the concept of isdefault - specifically for the default state of a request
 -- todo: developer note: consider using the term isprocessed (as opposed to iscomplete)
 -- todo: developer note: consider the concept of a template process - when a request is created, the process artifacts are cloned along with the process_uu as well. - this may not make sense...
--- todo: developer note: special columns created, created_by, updated, updated_by, isactive, isdefault, isprocesses, istemplate
 -- todo: developer note: consider creating a chuboe_system_element table to collect a unique list of columns, their descriptions and any other attribute we wish to track per column.
+-- todo: developer note: consider adding a link table between groups and targets. This allows the process admin the ability to hard-code people (as opposed to code deriving the user based on coded rules). 
 
 create schema if not exists private;
 set search_path = private;
@@ -30,7 +33,8 @@ VALUES
 CREATE TABLE chuboe_target (
   chuboe_target_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name VARCHAR(255) NOT NULL,
-  description TEXT
+  description TEXT,
+  is_show_group BOOLEAN DEFAULT FALSE
 );
 COMMENT ON TABLE chuboe_target IS 'Table that represents the targets or recipients of actions. A target is a set of standardized, cross-process representations of groups that might exist across multiple processes. The purpose of this table is to provide developers the least number of options to code scenarios against. The values in this table are near static, and they will not change often.';
 
@@ -259,7 +263,7 @@ CREATE TABLE chuboe_action_target_lnk (
   chuboe_action_target_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_action_uu UUID NOT NULL,
   chuboe_target_uu UUID NOT NULL,
-  chuboe_group_uu UUID, --can be null
+  chuboe_group_uu UUID, --can be null - only accept when target => is_show_group=Y
   FOREIGN KEY (chuboe_action_uu) REFERENCES chuboe_action(chuboe_action_uu),
   FOREIGN KEY (chuboe_target_uu) REFERENCES chuboe_target(chuboe_target_uu),
   FOREIGN KEY (chuboe_group_uu) REFERENCES chuboe_group(chuboe_group_uu),
@@ -271,7 +275,7 @@ CREATE TABLE chuboe_activity_target_lnk (
   chuboe_activity_target_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_activity_uu UUID NOT NULL,
   chuboe_target_uu UUID NOT NULL,
-  chuboe_group_uu UUID, --can be null
+  chuboe_group_uu UUID, --can be null - only accept when target => is_show_group=Y
   FOREIGN KEY (chuboe_activity_uu) REFERENCES chuboe_activity(chuboe_activity_uu),
   FOREIGN KEY (chuboe_target_uu) REFERENCES chuboe_target(chuboe_target_uu),
   FOREIGN KEY (chuboe_group_uu) REFERENCES chuboe_group(chuboe_group_uu),
