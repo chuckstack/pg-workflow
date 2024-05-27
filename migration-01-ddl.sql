@@ -54,6 +54,7 @@ VALUES
 
 CREATE TABLE chuboe_state_type (
   chuboe_state_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  is_default BOOLEAN DEFAULT FALSE,
   name VARCHAR(255) NOT NULL,
   description TEXT
 );
@@ -61,13 +62,13 @@ COMMENT ON TABLE chuboe_state_type IS 'Table that defines the types of states of
 
 -- Consider making this an enum since code will most likely be written against these values.
 -- Here are reference values
-INSERT INTO chuboe_state_type (chuboe_state_type_uu, name, description)
+INSERT INTO chuboe_state_type (chuboe_state_type_uu, name, description, is_default)
 VALUES
-  ('8cc3f867-8f75-4752-a91b-c92330979242', 'Start', 'Should only be one per process. This state is the state into which a new Request is placed when it is created.'),
-  ('d5f2d251-4571-4638-823f-eecbf9fded5c', 'Normal', 'A regular state with no special designation.'),
-  ('9a2b6a08-e094-4c12-8df6-67f7218b1fd7', 'Complete', 'A state signifying that any Request in this state have completed normally.'),
-  ('35e12c60-8a35-4855-b3d1-e9ebd0e09450', 'Denied', 'A state signifying that any Request in this state has been denied (e.g. never got started and will not be worked on).'),
-  ('345cceaf-4020-4621-b52d-a886c7bc57d8', 'Cancelled', 'A state signifying that any Request in this state has been cancelled (e.g. work was started but never completed).');
+  ('8cc3f867-8f75-4752-a91b-c92330979242', 'Start', 'Should only be one per process. This state is the state into which a new Request is placed when it is created.', true),
+  ('d5f2d251-4571-4638-823f-eecbf9fded5c', 'Normal', 'A regular state with no special designation.', false),
+  ('9a2b6a08-e094-4c12-8df6-67f7218b1fd7', 'Complete', 'A state signifying that any Request in this state have completed normally.', false),
+  ('35e12c60-8a35-4855-b3d1-e9ebd0e09450', 'Denied', 'A state signifying that any Request in this state has been denied (e.g. never got started and will not be worked on).', false),
+  ('345cceaf-4020-4621-b52d-a886c7bc57d8', 'Cancelled', 'A state signifying that any Request in this state has been cancelled (e.g. work was started but never completed).', false);
 
 CREATE TABLE chuboe_activity_type (
   chuboe_activity_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),

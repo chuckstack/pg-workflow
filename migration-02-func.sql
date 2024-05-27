@@ -8,10 +8,8 @@ set search_path = private;
 
 -- Function to create a chuboe_request
 CREATE OR REPLACE FUNCTION create_chuboe_request(
-    p_process_name VARCHAR,
-    p_title VARCHAR,
-    p_requester_email VARCHAR,
-    p_initial_state_name VARCHAR
+    p_process_search_key VARCHAR,
+    p_requester_email VARCHAR
 )
 RETURNS VOID AS $$
 DECLARE
@@ -23,7 +21,7 @@ BEGIN
     -- Get the process UUID based on the process name
     SELECT chuboe_process_uu INTO v_process_uu
     FROM chuboe_process
-    WHERE name = p_process_name;
+    WHERE name = p_process_search_key;
 
     -- Get the requester UUID based on the requester email
     SELECT chuboe_user_uu INTO v_requester_uu
@@ -32,12 +30,14 @@ BEGIN
 
     -- Get the initial state UUID based on the state name and process UUID
     SELECT chuboe_state_uu INTO v_initial_state_uu
-    FROM chuboe_state
-    WHERE name = p_initial_state_name AND chuboe_process_uu = v_process_uu;
+    FROM chuboe_state s
+    JOIN chuboe_state_type st on s.chuboe_state_type_uu = st.chuboe_state_type_uu
+    WHERE st.is_default=true AND s.chuboe_process_uu = v_process_uu;
+    --todo: select first to account for multiple
 
     -- Insert a new request
-    INSERT INTO chuboe_request (chuboe_process_uu, title, date_requested, chuboe_user_uu, user_name, chuboe_current_state_uu)
-    VALUES (v_process_uu, p_title, NOW(), v_requester_uu, (SELECT CONCAT(first_name, ' ', last_name) FROM chuboe_user WHERE chuboe_user_uu = v_requester_uu), v_initial_state_uu)
+    INSERT INTO chuboe_request (chuboe_process_uu, search_key, date_requested, chuboe_user_uu, chuboe_current_state_uu)
+    VALUES (v_process_uu, p_process_search_key, NOW(), v_requester_uu, v_initial_state_uu)
     RETURNING chuboe_request_uu INTO v_request_uu;
 
     -- Add the requester as a stakeholder
@@ -45,15 +45,15 @@ BEGIN
     VALUES (v_request_uu, v_requester_uu);
 
     -- Add an initial note to the request
-    INSERT INTO chuboe_request_note (chuboe_request_uu, chuboe_user_uu, note)
-    VALUES (v_request_uu, v_requester_uu, 'Request created');
+    --INSERT INTO chuboe_request_note (chuboe_request_uu, chuboe_user_uu, note)
+    --VALUES (v_request_uu, v_requester_uu, 'Request created');
+    --todo: come back to this - it needs more thought
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION create_chuboe_request(varchar,varchar,varchar,varchar) is 'This function helps users create requests from processes. The goal of this function is to provide the easiest way (with the fewest requirements) to create a new request';
+COMMENT ON FUNCTION create_chuboe_request(varchar,varchar) is 'This function helps users create requests from processes. The goal of this function is to provide the easiest way (with the fewest requirements) to create a new request';
 --todo:make the following changes:
 ---request user_name needs to go away
 ---needs a default state
----title should be optional - auto-created if not specified
 
 
 --todo: consider something like the following:
