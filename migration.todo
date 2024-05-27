@@ -2,7 +2,8 @@
 -- create the ddl artifacts to track workflow
 
 -- conventions, questions, and thoughts
--- todo: developer note: special columns created, created_by, updated, updated_by, is_active, is_default, is_processed, is_template
+-- need to copy the postgrest => user management infrastructure
+-- todo: add created, updated, is_active
 -- todo: developer note: need concept of a resolution
 -- todo: developer note: take note of the concept of the term role - group and role seems to serve a similar purpose.
 -- todo: developer note: need the concept of is_default - specifically for the default state of a request

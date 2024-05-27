@@ -1,14 +1,28 @@
--- The purpose of this file is to populate a newly created database is the artifacts needed to create, maintain and execute workflows.
+-- The purpose of this file is to populate a newly created database is the table artifacts needed to create, maintain and execute workflows.
 -- Great care has been given to create documentation in the form of table comments. If at any time the comments can be improved, please recommend improvements.
--- Great care has been given to sequence the tables in an order that both 1. works as a sql script and 2. aids users in understanding the natural order of how records are created.
+-- Great care has been given to order the tables exist in this file so that both 1. it works as a sql script and 2. the order aids users in understanding the natural order of how records are created and related.
 -- When using this file to create examples, tools or interactions, ignore all todo statements.
 
+--Table and column conventions:
+  -- tables use uuid as primary keys. The purpose of this decision is to make creating very large (and often replicated) systems easier to manage. Doing so also allows for clients to define their own uuid values.
+  -- all tables have a single primary key (even if it is a link table). The purpose of this decision is that it enables the concept of table_name + record_uu identification. Said another way, if you know the table_name and the record_uu of any given record, you can always find the details associated with that record. This convention also allows for maintaining centralized logs, attachments, and attributes.
+  -- search_key is a user defined alphanumeric. The purpose of this column is to allow users to create keys that are more easily remembered by humans. It is up to the implementor to determine if the search_key should be unique. If it should be unique, the implementor determines the criteria for being unique. search_key columns are most appropriate for tables that maintain a primary concept but the record is not considered transactional. Examples of non-transactional records include users, business partners, and products.
+  -- document_no is a user defined alphanumeric. The purpose of this column is to allow the system to auto-populate auto-incrementing document numbers. It is up to the implementor to determine if the document_no should be unique. If it should be unique, the implementor determines the criteria for being unique. document_no are most appropriate for tables that represent transactional data. Examples of a transaction records include invoices, orders, and payments.
+  -- created is a timestamp indicating when the record was created.
+  -- created_by is a uuid pointing to the database user/role that created the record.
+  -- updated is a timestamp indicating when the record was last updated.
+  -- updated_by is a uuid pointing to the database user/role that last updated the record.
+  -- is_active is a boolean that indicates if a record can be modified. is_active also acts as a soft-delete. If a record has an is_active=false, the record should be be returned as an option for selection in future lists and drop down fields.
+  -- is_default is a boolean that indicates if a record should represent a default option. Typically, only one records can have is_default=true; however, there are circumstances where multiple records in the same table can have is_default=true based on unique record attributes. Implementors chose the unique criteria for any given table with a is_default column.
+  -- is_processed is a boolean that indicates of a record has reached its final state. Said another way, if a record's is_processed=true, then no part of the record should updated or deleted.
+  -- is_template is a boolean that indicates if a record exists for the purpose of cloning.
 
 create schema if not exists private;
 set search_path = private;
 
 CREATE TABLE chuboe_user (
   chuboe_user_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  search_key VARCHAR(255) NOT NULL,
   last_name VARCHAR(255) NOT NULL,
   first_name VARCHAR(255) NOT NULL,
   email VARCHAR(255),
@@ -17,9 +31,9 @@ CREATE TABLE chuboe_user (
 COMMENT ON TABLE chuboe_user IS 'Table that contains users. Users are a cross-process represenation of actors in a workflow. Any one user can participate in multiple processes. See also: chuboe_group.';
 
 -- create a default user
-INSERT INTO chuboe_user (first_name, last_name, email, description)
+INSERT INTO chuboe_user (chuboe_user_uu, search_key, first_name, last_name, email, description)
 VALUES
-  ('Super', 'User', 'superuser@system.com', 'First user created');
+  ('984c9035-3be3-4998-b3e9-46620b091559', 'super_user', 'Super', 'User', 'superuser@system.com', 'First user created');
 
 CREATE TABLE chuboe_target (
   chuboe_target_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -31,12 +45,12 @@ COMMENT ON TABLE chuboe_target IS 'Table that represents the targets or recipien
 
 -- Consider making this an enum since code will most likely be written against these values.
 -- Here are reference values
-INSERT INTO chuboe_target (name, description)
+INSERT INTO chuboe_target (chuboe_target_uu, name, description)
 VALUES
-  ('Requester', 'The user who initiated the request.'),
-  ('Stakeholders', 'The users who are stakeholders of the request.'),
-  ('Group Members', 'The users who are members of the group associated with the request.'),
-  ('Process Admins', 'The users who are administrators of the process associated with the request.');
+  ('77c9aad9-5ff4-4fd0-a6fe-81295e419aea', 'Requester', 'The user who initiated the request.'),
+  ('7477f448-46c6-48a5-8f60-2c73aa124d28', 'Stakeholders', 'The users who are stakeholders of the request.'),
+  ('517d9c38-85fd-4567-9ce4-d59e3d51d0af', 'Group Members', 'The users who are members of the group associated with the request.'),
+  ('1b405fc3-90cf-41a5-9ed9-b60d35cfa44c', 'Process Admins', 'The users who are administrators of the process associated with the request.');
 
 CREATE TABLE chuboe_state_type (
   chuboe_state_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -47,13 +61,13 @@ COMMENT ON TABLE chuboe_state_type IS 'Table that defines the types of states of
 
 -- Consider making this an enum since code will most likely be written against these values.
 -- Here are reference values
-INSERT INTO chuboe_state_type (name, description)
+INSERT INTO chuboe_state_type (chuboe_state_type_uu, name, description)
 VALUES
-  ('Start', 'Should only be one per process. This state is the state into which a new Request is placed when it is created.'),
-  ('Normal', 'A regular state with no special designation.'),
-  ('Complete', 'A state signifying that any Request in this state have completed normally.'),
-  ('Denied', 'A state signifying that any Request in this state has been denied (e.g. never got started and will not be worked on).'),
-  ('Cancelled', 'A state signifying that any Request in this state has been cancelled (e.g. work was started but never completed).');
+  ('8cc3f867-8f75-4752-a91b-c92330979242', 'Start', 'Should only be one per process. This state is the state into which a new Request is placed when it is created.'),
+  ('d5f2d251-4571-4638-823f-eecbf9fded5c', 'Normal', 'A regular state with no special designation.'),
+  ('9a2b6a08-e094-4c12-8df6-67f7218b1fd7', 'Complete', 'A state signifying that any Request in this state have completed normally.'),
+  ('35e12c60-8a35-4855-b3d1-e9ebd0e09450', 'Denied', 'A state signifying that any Request in this state has been denied (e.g. never got started and will not be worked on).'),
+  ('345cceaf-4020-4621-b52d-a886c7bc57d8', 'Cancelled', 'A state signifying that any Request in this state has been cancelled (e.g. work was started but never completed).');
 
 CREATE TABLE chuboe_activity_type (
   chuboe_activity_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -64,12 +78,13 @@ COMMENT ON TABLE chuboe_activity_type IS 'Table that defines the types of activi
 
 -- Consider making this an enum since code will most likely be written against these values.
 -- Here are reference values
-INSERT INTO chuboe_activity_type (name, description)
+INSERT INTO chuboe_activity_type (chuboe_activity_type_uu, name, description)
 VALUES
-  ('Add Note', 'Specifies that we should automatically add a note to a Request.'),
-  ('Send Email', 'Specifies that we should send an email to one or more recipients.'),
-  ('Add Stakeholders', 'Specifies that we should add one or more persons as Stakeholders on this request.'),
-  ('Remove Stakeholders', 'Specifies that we should remove one or more stakeholders from this request.');
+  ('6e2f1e78-31b5-4176-b986-6a0b16cfd58c', 'Add Note', 'Specifies that we should automatically add a note to a Request.'),
+  ('d3ed8b7a-8b1b-4b1e-9b1e-1b1b1b1b1b1b', 'Send Email', 'Specifies that we should send an email to one or more recipients.'),
+  ('a1b2c3d4-e5f6-7890-1234-5678901234ab', 'Add Stakeholders', 'Specifies that we should add one or more persons as Stakeholders on this request.'),
+  ('1a2b3c4d-5e6f-7890-1234-5678901234ab', 'Remove Stakeholders', 'Specifies that we should remove one or more stakeholders from this request.');
+
 
 CREATE TABLE chuboe_action_type (
   chuboe_action_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -82,18 +97,20 @@ COMMENT ON TABLE chuboe_action_type IS 'Table that defines the types of actions 
 
 -- Consider making this an enum since code will most likely be written against these values.
 -- Here are reference values
-INSERT INTO chuboe_action_type (name, description, is_parallel_action)
+INSERT INTO chuboe_action_type (chuboe_action_type_uu, name, description, is_parallel_action)
 VALUES
-  ('Approve', 'The actioner is suggesting that the request should move to the next state.',false),
-  ('Deny', 'The actioner is suggesting that the request should move to the previous state.',false),
-  ('Execute', 'The actioner must perform a task then is suggesting that the request should move to the previous state.',false),
-  ('Execute Parallel', 'The actioners must perform all tasks then is suggesting that the request should move to the previous state.',true),
-  ('Cancel', 'The actioner is suggesting that the request should move to the Cancelled state in the process.',false),
-  ('Restart', 'The actioner suggesting that the request be moved back to the Start state in the process.',false),
-  ('Resolve', 'The actioner is suggesting that the request be moved all the way to the Completed state.',false);
+  ('3d4e5f6a-7b8c-9d0e-1f2a-3b4c5d6e7f8a', 'Approve', 'The actioner is suggesting that the request should move to the next state.', false),
+  ('3e513ff8-e50e-41fa-a529-6a2d33104fc3', 'Deny', 'The actioner is suggesting that the request should move to the previous state.', false),
+  ('bd931ba8-28af-4ac8-a0f7-67c484e0e1ca', 'Execute', 'The actioner must perform a task then is suggesting that the request should move to the previous state.', false),
+  ('22c9dd7e-18fa-4c75-9364-69aa05554446', 'Execute Parallel', 'The actioners must perform all tasks then is suggesting that the request should move to the previous state.', true),
+  ('579d1832-35a9-4a49-8735-5042dbf123e2', 'Cancel', 'The actioner is suggesting that the request should move to the Cancelled state in the process.', false),
+  ('a9d8c477-86db-4334-9b7b-0ef441d68088', 'Restart', 'The actioner suggesting that the request be moved back to the Start state in the process.', false),
+  ('1b25c513-2f1d-4e7d-9691-f501d4ce460c', 'Resolve', 'The actioner is suggesting that the request be moved all the way to the Completed state.', false);
+
 
 CREATE TABLE chuboe_process (
   chuboe_process_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  search_key VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
   is_processed BOOLEAN NOT NULL, -- if true, process and process attribute tables cannot be modified, to make changes, clone the process.
   description TEXT
@@ -102,6 +119,7 @@ COMMENT ON TABLE chuboe_process IS 'Table that represents the starting point of 
 
 CREATE TABLE chuboe_group (
   chuboe_group_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  search_key VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
   description TEXT,
   chuboe_process_uu UUID NOT NULL,
@@ -134,6 +152,7 @@ CREATE TABLE chuboe_state (
   chuboe_state_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_state_type_uu UUID NOT NULL,
   chuboe_process_uu UUID NOT NULL,
+  search_key VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
   description TEXT,
   FOREIGN KEY (chuboe_state_type_uu) REFERENCES chuboe_state_type(chuboe_state_type_uu),
@@ -145,6 +164,7 @@ CREATE TABLE chuboe_action (
   chuboe_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_action_type_uu UUID NOT NULL,
   chuboe_process_uu UUID NOT NULL,
+  search_key VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
   description TEXT,
   FOREIGN KEY (chuboe_action_type_uu) REFERENCES chuboe_action_type(chuboe_action_type_uu),
@@ -155,10 +175,9 @@ COMMENT ON TABLE chuboe_action IS 'Table that represents the actions that can or
 CREATE TABLE chuboe_request (
   chuboe_request_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_process_uu UUID NOT NULL,
-  title VARCHAR(255) NOT NULL,
+  search_key VARCHAR(255) NOT NULL,
   date_requested TIMESTAMP NOT NULL,
   chuboe_user_uu UUID NOT NULL,
-  user_name VARCHAR(255) NOT NULL,
   chuboe_current_state_uu UUID NOT NULL,
   FOREIGN KEY (chuboe_process_uu) REFERENCES chuboe_process(chuboe_process_uu),
   FOREIGN KEY (chuboe_user_uu) REFERENCES chuboe_user(chuboe_user_uu),
@@ -223,6 +242,7 @@ CREATE TABLE chuboe_activity (
   chuboe_activity_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_activity_type_uu UUID NOT NULL,
   chuboe_process_uu UUID NOT NULL,
+  search_key VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
   description TEXT,
   FOREIGN KEY (chuboe_activity_type_uu) REFERENCES chuboe_activity_type(chuboe_activity_type_uu),
@@ -297,76 +317,3 @@ CREATE TABLE chuboe_request_action_log (
   FOREIGN KEY (chuboe_transition_uu) REFERENCES chuboe_transition(chuboe_transition_uu)
 );
 COMMENT ON TABLE chuboe_request_action_log IS 'Table that links actions to requests and their respective transitions. This is both 1. a record of all non-processed actions, and 2. a log of all actions per transition.';
-
--- Function to create a chuboe_request
-CREATE OR REPLACE FUNCTION create_chuboe_request(
-    p_process_name VARCHAR,
-    p_title VARCHAR,
-    p_requester_email VARCHAR,
-    p_initial_state_name VARCHAR
-)
-RETURNS VOID AS $$
-DECLARE
-    v_process_uu UUID;
-    v_requester_uu UUID;
-    v_initial_state_uu UUID;
-    v_request_uu UUID;
-BEGIN
-    -- Get the process UUID based on the process name
-    SELECT chuboe_process_uu INTO v_process_uu
-    FROM chuboe_process
-    WHERE name = p_process_name;
-
-    -- Get the requester UUID based on the requester email
-    SELECT chuboe_user_uu INTO v_requester_uu
-    FROM chuboe_user
-    WHERE email = p_requester_email;
-
-    -- Get the initial state UUID based on the state name and process UUID
-    SELECT chuboe_state_uu INTO v_initial_state_uu
-    FROM chuboe_state
-    WHERE name = p_initial_state_name AND chuboe_process_uu = v_process_uu;
-
-    -- Insert a new request
-    INSERT INTO chuboe_request (chuboe_process_uu, title, date_requested, chuboe_user_uu, user_name, chuboe_current_state_uu)
-    VALUES (v_process_uu, p_title, NOW(), v_requester_uu, (SELECT CONCAT(first_name, ' ', last_name) FROM chuboe_user WHERE chuboe_user_uu = v_requester_uu), v_initial_state_uu)
-    RETURNING chuboe_request_uu INTO v_request_uu;
-
-    -- Add the requester as a stakeholder
-    INSERT INTO chuboe_request_stakeholder_lnk (chuboe_request_uu, chuboe_user_uu)
-    VALUES (v_request_uu, v_requester_uu);
-
-    -- Add an initial note to the request
-    INSERT INTO chuboe_request_note (chuboe_request_uu, chuboe_user_uu, note)
-    VALUES (v_request_uu, v_requester_uu, 'Request created');
-END;
-$$ LANGUAGE plpgsql;
---todo:make the following changes:
----request user_name needs to go away
----needs a default state
----title should be optional - auto-created if not specified
-
-
---todo: consider something like the following:
----- Trigger function to log request creation
---CREATE OR REPLACE FUNCTION log_request_creation()
---RETURNS TRIGGER AS $$
---BEGIN
---    -- Insert a record into the chuboe_request_action_log table
---    INSERT INTO chuboe_request_action_log (chuboe_request_uu, chuboe_action_uu, chuboe_transition_uu, is_active, is_processed)
---    VALUES (NEW.chuboe_request_uu, NULL, NULL, true, false);
---
---    RETURN NEW;
---END;
---$$ LANGUAGE plpgsql;
---
----- Trigger to log request creation
---CREATE TRIGGER tr_log_request_creation
---AFTER INSERT ON chuboe_request
---FOR EACH ROW
---EXECUTE FUNCTION log_request_creation();
-
---Issues with the above:
----does not execute because of non-null constraint
----insert statement hard-codes null on important columns
----needs more thought...
