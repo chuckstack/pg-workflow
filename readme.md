@@ -4,7 +4,7 @@
 Workflow is notoriously difficult. The concepts can be difficult to learn. The applications are often difficult to install and maintain, and they are either too complicated or overly simple. It is incredibly difficult to create a workflow architecture that is both generic enough and easy enough for broad adoption. Here is my attempt based on my 25 years of experience!!
 
 ## Purpose
-The purpose of this project is to make pragmatic workflow management available to anyone who wants to use postgresql.
+The purpose of this project is to make pragmatic open source workflow management available to anyone who wants to use postgresql.
 
 ## Workflow Use Cases to be Supported
 1. Traditional workflow involving processes, actions, states, transitions, activities, requests and resolutions. This is the use case when you think of a business process management (BPM) diagram.
