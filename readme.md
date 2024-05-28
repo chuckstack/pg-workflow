@@ -8,12 +8,12 @@ The purpose of this project is to make pragmatic open source workflow management
 
 ## Workflow Use Cases to be Supported
 1. Traditional workflow involving processes, actions, states, transitions, activities, requests and resolutions. This is the use case when you think of a business process management (BPM) diagram.
-1. Ad hoc workflow offering the greatest freedom and flexibility in terms of the request lifecycle. Ad hoc workflows are used when institutional knowledge of approval process are well understood. Said another way, users know what roles need to be consulted for what approvals. The system simply needs to make it easy to create and process the requests.
+1. Ad hoc workflow offering the greatest freedom and flexibility in terms of the request life cycle. Ad hoc workflows are used when institutional knowledge of approval process are well understood. Said another way, users know what roles need to be consulted for what approvals. The system simply needs to make it easy to create and process the requests.
 1. Queue-based activities that enable users or groups to see and navigate to records/documents that enter a specific state. If everyone in an organization were to know when they are needed, and if everyone acted accordingly in a timely manner, the world would be a better and more efficient place.
 1. Checklists for simply tracking what needs to happen and letting everyone know when stuff is done.
 
 ## Learn More
-If you would like to discuss this framework, plesae join the [ERP Academy](https://erp-academy.chuckboecking.com/?page_id=6). [Here are the frequently asked questions -  FAQ](https://erp-academy.chuckboecking.com/?page_id=32). [Here is that others have to say about me](https://erp-academy.chuckboecking.com/?page_id=2696).
+If you would like to discuss this framework, please join the [ERP Academy](https://erp-academy.chuckboecking.com/?page_id=6). [Here are the frequently asked questions -  FAQ](https://erp-academy.chuckboecking.com/?page_id=32). [Here is that others have to say about me](https://erp-academy.chuckboecking.com/?page_id=2696).
 
 ## Traditional Workflow Concepts
 
@@ -51,7 +51,7 @@ If you would like to discuss this framework, plesae join the [ERP Academy](https
 - todo: here
 
 Other notes:
-- supports both people and system responsilities
+- supports both people and system responsibilities
 - supports real-time interaction with outside systems (webhooks)
 - 1,000,000% the goal to have ai help write the application
 - 1,000,000% the goal to have ai help users create and manage processes and requests. 
