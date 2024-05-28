@@ -14,6 +14,7 @@
 -- todo: developer note: chuboe_action seems to be a mix between action and task (traditional workflow term)
 -- todo: developer note: everything needs an is_active to prevent deletes.
 -- todo: developer note: consider adding search_key to every primary table (non-link-table) - this gives users the ability to create short codes for records without needing to spell out the full name or knowing the uuid
+-- todo: translation tables
 
 --possible improvements
 -- There is no explicit concept of a "task" or "work item" that represents an assignable unit of work within a workflow.

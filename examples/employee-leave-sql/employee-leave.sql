@@ -20,19 +20,19 @@ set search_path = private;
 
 --1. Insert sample users:
 
-INSERT INTO chuboe_user (first_name, last_name, email)
+INSERT INTO chuboe_user (search_key, first_name, last_name, email)
 VALUES
-  ('John', 'Doe', 'john.doe@example.com'),
-  ('Jane', 'Smith', 'jane.smith@example.com'),
-  ('Michael', 'Johnson', 'michael.johnson@example.com'),
-  ('Emily', 'Davis', 'emily.davis@example.com');
+  ('john_doe',        'John',    'Doe',     'john.doe@example.com'),
+  ('jane_smith',      'Jane',    'Smith',   'jane.smith@example.com'),
+  ('michael_johnson', 'Michael', 'Johnson', 'michael.johnson@example.com'),
+  ('emily_davis',     'Emily',   'Davis',   'emily.davis@example.com');
 
 --Discussion: We insert four sample users into the chuboe_user table to represent employees and managers involved in the leave request process.
 
 --2. Insert a sample process:
 
-INSERT INTO chuboe_process (name, is_processed, description)
-VALUES ('Employee Leave Request', false, 'Process for managing employee leave requests');
+INSERT INTO chuboe_process (search_key, name, is_processed, description)
+VALUES ('employee_leave_request', 'Employee Leave Request', false, 'Process for managing employee leave requests');
 
 --Discussion: We create a new process named "Employee Leave Request" to represent the workflow for handling leave requests.
 
@@ -40,10 +40,10 @@ VALUES ('Employee Leave Request', false, 'Process for managing employee leave re
 
 INSERT INTO chuboe_state (chuboe_state_type_uu, chuboe_process_uu, name, description)
 VALUES
-  ((SELECT chuboe_state_type_uu FROM chuboe_state_type WHERE name = 'Start'), (SELECT chuboe_process_uu FROM chuboe_process WHERE name = 'Employee Leave Request'), 'New Request', 'Employee submits a new leave request'),
-  ((SELECT chuboe_state_type_uu FROM chuboe_state_type WHERE name = 'Normal'), (SELECT chuboe_process_uu FROM chuboe_process WHERE name = 'Employee Leave Request'), 'Manager Review', 'Manager reviews the leave request'),
-  ((SELECT chuboe_state_type_uu FROM chuboe_state_type WHERE name = 'Complete'), (SELECT chuboe_process_uu FROM chuboe_process WHERE name = 'Employee Leave Request'), 'Request Approved', 'Leave request is approved and processed'),
-  ((SELECT chuboe_state_type_uu FROM chuboe_state_type WHERE name = 'Denied'), (SELECT chuboe_process_uu FROM chuboe_process WHERE name = 'Employee Leave Request'), 'Request Denied', 'Leave request is denied');
+  ((SELECT chuboe_state_type_uu FROM chuboe_state_type WHERE name = 'Start'), (SELECT chuboe_process_uu FROM chuboe_process WHERE name = 'employee_leave_request'), 'New Request', 'Employee submits a new leave request'),
+  ((SELECT chuboe_state_type_uu FROM chuboe_state_type WHERE name = 'Normal'), (SELECT chuboe_process_uu FROM chuboe_process WHERE name = 'employee_leave_request'), 'Manager Review', 'Manager reviews the leave request'),
+  ((SELECT chuboe_state_type_uu FROM chuboe_state_type WHERE name = 'Complete'), (SELECT chuboe_process_uu FROM chuboe_process WHERE name = 'employee_leave_request'), 'Request Approved', 'Leave request is approved and processed'),
+  ((SELECT chuboe_state_type_uu FROM chuboe_state_type WHERE name = 'Denied'), (SELECT chuboe_process_uu FROM chuboe_process WHERE name = 'employee_leave_request'), 'Request Denied', 'Leave request is denied');
 
 --Discussion: We insert four states into the chuboe_state table, representing the different stages of the leave request process. We use subqueries to fetch the appropriate chuboe_state_type_uu and chuboe_process_uu values based on their names.
 
