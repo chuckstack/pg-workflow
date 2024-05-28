@@ -36,7 +36,7 @@ VALUES ('employee_leave_request', 'Employee Leave Request', false, 'Process for 
 
 --Discussion: We create a new process named "Employee Leave Request" to represent the workflow for handling leave requests.
 
---3. Insert sample states:
+--3. Insert sample states into process:
 
 INSERT INTO chuboe_state (chuboe_state_type_uu, chuboe_process_uu, name, description)
 VALUES
@@ -47,7 +47,7 @@ VALUES
 
 --Discussion: We insert four states into the chuboe_state table, representing the different stages of the leave request process. We use subqueries to fetch the appropriate chuboe_state_type_uu and chuboe_process_uu values based on their names.
 
---4. Insert sample actions:
+--4. Insert sample actions into process:
 
 INSERT INTO chuboe_action (chuboe_action_type_uu, chuboe_process_uu, name, description)
 VALUES
@@ -56,7 +56,7 @@ VALUES
 
 --Discussion: We insert two actions into the chuboe_action table, representing the possible actions a manager can take on a leave request: approve or deny.
 
---5. Insert sample transitions:
+--5. Insert sample transitions into process:
 
 INSERT INTO chuboe_transition (chuboe_current_state_uu, chuboe_next_state_uu)
 VALUES
