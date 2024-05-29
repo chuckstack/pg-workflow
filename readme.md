@@ -62,7 +62,7 @@ If you would like to discuss this framework, please join the [ERP Academy](https
 - to be explained later
 - currently implementing the private schema
 
-Other notes:
+## Other notes
 - supports both people and system responsibilities
 - supports real-time interaction with outside systems (webhooks)
 - 1,000,000% the goal to have ai help write the application
