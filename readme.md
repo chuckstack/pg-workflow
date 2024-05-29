@@ -52,6 +52,16 @@ If you would like to discuss this framework, please join the [ERP Academy](https
 ### Level 3 explanation: workflow request creation and life cycle
 - todo: here
 
+## Architecture
+- private schema holds the internal data structure
+- api schema holds the public interface (both sql and rest)
+- rest interface provided by postgrest
+- webui interface provide by htmx through postgrest
+
+## Installation
+- to be explained later
+- currently implementing the private schema
+
 Other notes:
 - supports both people and system responsibilities
 - supports real-time interaction with outside systems (webhooks)
