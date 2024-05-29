@@ -3,6 +3,11 @@
 -- Great care has been given to sequence the functions in an order that both 1. works as a sql script and 2. aids users in understanding the natural order of how functions are used.
 -- When using this file to create examples, tools or interactions, ignore all todo statements.
 
+-- list of imagined functions --
+    -- chuboe_create_process_details_from_process (see below)
+    -- chuboe_create_request_from_process (see below)
+-- list of imagined triggers --
+    -- here...
 
 set search_path = private;
 
@@ -37,7 +42,6 @@ BEGIN
     select v_process_existing_uu into v_process_new_uu;
 
     RETURN v_process_existing_uu;
-
 END;
 $$ LANGUAGE plpgsql;
 COMMENT ON FUNCTION chuboe_create_process_details_from_process(varchar,varchar,varchar) is '';

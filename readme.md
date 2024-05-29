@@ -21,7 +21,7 @@ If you would like to discuss this framework, please join the [ERP Academy](https
 
 ### Level 0 explanation: basic concepts
 - Workflow Process (process for short): represents the design of a desired workflow. Let's use an employee leave approval workflow as an example. The process is the starting point for creating your workflow attributes like: what are the states, who is involved, what actions impact state changes...
-- Workflow Request (request for short): represents an instance a particular workflow process. Let's use an employee leave approval for "Jane Smith on Oct 5th through Oct 29th" as an example. The workflow process will potentially spawn many, many workflow requests.
+- Workflow Request (request for short): represents an instance a particular workflow process. Let's use an employee leave approval for "Jane Smith on Oct 5th through Oct 29th" as an example. A workflow process will potentially spawn many, many workflow requests.
 
 ### Level 1 explanation: workflow types (background concepts needed before we create our first workflow process)
 - There are a number of records that need to exist before you start creating your first workflow process.
@@ -78,8 +78,10 @@ If you would like to discuss this framework, please join the [ERP Academy](https
 - discuss the relationship between targets and groups
 
 ## Todo
+- needs request => result field => last result field => result history table
 - see migration.todo
 - add the ability to target an individual user and role (as well as a group)
 - refactor table names to include chuboe_wf to designate that they belong to a specific app (do not change chuboe_user or chuboe_role)
 - refresh work-instruction-admin.txt
 - refresh example => employee-leave
+- consider moving schema to wf-private (from private)

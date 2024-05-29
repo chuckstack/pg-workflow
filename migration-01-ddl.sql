@@ -16,6 +16,7 @@
   -- is_default is a boolean that indicates if a record should represent a default option. Typically, only one records can have is_default=true; however, there are circumstances where multiple records in the same table can have is_default=true based on unique record attributes. Implementors chose the unique criteria for any given table with a is_default column.
   -- is_processed is a boolean that indicates of a record has reached its final state. Said another way, if a record's is_processed=true, then no part of the record should updated or deleted.
   -- is_template is a boolean that indicates if a record exists for the purpose of cloning.
+  -- when naming columns the noun comes first and the adjective comes next. Example: chuboe_state_next_uu where state is the noun and next is the adjective. The benefit of this approach is that like columns (and the resulting methods/calls) appear next to each other alphabetically.
 
 create schema if not exists private;
 set search_path = private;
@@ -310,13 +311,15 @@ COMMENT ON TABLE chuboe_request_stakeholder_lnk IS 'Table that links a user to a
 
 CREATE TABLE chuboe_transition (
   chuboe_transition_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  chuboe_current_state_uu UUID NOT NULL,
-  chuboe_next_state_uu UUID NOT NULL,
-  FOREIGN KEY (chuboe_current_state_uu) REFERENCES chuboe_state(chuboe_state_uu),
-  FOREIGN KEY (chuboe_next_state_uu) REFERENCES chuboe_state(chuboe_state_uu)
+  chuboe_state_current_uu UUID NOT NULL,
+  chuboe_state_next_uu UUID NOT NULL,
+  chuboe_resolution_uu UUID,
+  FOREIGN KEY (chuboe_state_current_uu) REFERENCES chuboe_state(chuboe_state_uu),
+  FOREIGN KEY (chuboe_state_next_uu) REFERENCES chuboe_state(chuboe_state_uu),
+  FOREIGN KEY (chuboe_resolution_uu) REFERENCES chuboe_resolution(chuboe_resolution_uu),
+  UNIQUE (chuboe_state_current_uu, chuboe_state_next_uu, chuboe_resolution_uu)
 );
-COMMENT ON TABLE chuboe_transition IS 'Table that defines the transitions between states in a process. Processes represent a flow chart, and to do that we need to be able to move requests between states. A transition is a path between two states that shows how a request can travel between them. Transitions are initiated as a result of one or more actions. Transitions are unique to a process.';
--- todo: consider renaming to chuboe_state_current and chuboe_state_next
+COMMENT ON TABLE chuboe_transition IS 'Table that defines the transitions between states in a process. Processes represent a flow chart, and to do that we need to be able to move requests between states. A transition is a path between two states that shows how a request can travel between them. Note that setting a resolution is optional. If you include resolutions, you might need to specify the same transition multiple times (once per resolution). These records will act as options for the user and help them automatically set the resolution based on their choice. Transitions are initiated as a result of one or more actions. Transitions are unique to a process.';
 
 CREATE TABLE chuboe_activity (
   chuboe_activity_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -351,15 +354,18 @@ CREATE TABLE chuboe_transition_activity_lnk (
 );
 COMMENT ON TABLE chuboe_transition_activity_lnk IS 'Table that links activities to their respective transitions in a specific process. This table allows you to specify that the system should execute a specific activity as a result of performing a specific transition.';
 
-CREATE TABLE chuboe_transition_action_lnk (
+CREATE TABLE chuboe_action_transition_lnk (
   chuboe_transition_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   chuboe_transition_uu UUID NOT NULL,
   chuboe_action_uu UUID NOT NULL,
+  chuboe_resolution_uu UUID,
   FOREIGN KEY (chuboe_transition_uu) REFERENCES chuboe_transition(chuboe_transition_uu),
   FOREIGN KEY (chuboe_action_uu) REFERENCES chuboe_action(chuboe_action_uu),
-  UNIQUE (chuboe_transition_uu, chuboe_action_uu)
+  FOREIGN KEY (chuboe_resolution_uu) REFERENCES chuboe_resolution(chuboe_resolution_uu),
+  UNIQUE (chuboe_transition_uu, chuboe_action_uu, chuboe_resolution_uu)
 );
-COMMENT ON TABLE chuboe_transition_action_lnk IS 'Table that links actions to transitions in the workflow process. This table defines what actions can be performed to initiate a particular transition';
+COMMENT ON TABLE chuboe_action_transition_lnk IS 'Table that links actions to transitions in the workflow process. This table defines what actions can be performed to initiate a particular transition. Note that setting a resolution is optional. If you include resolutions, you might need to specify the same action multiple times (once per resolution). These records will act as options for the user and help them automatically set the resolution based on their choice. If you link an action to a transition with conflicting resolutions, the actions resolution will win since this is the users choice.';
+-- todo: need a test/validator to identify conflicting resolutions
 
 CREATE TABLE chuboe_action_target_lnk (
   chuboe_action_target_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
