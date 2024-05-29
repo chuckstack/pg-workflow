@@ -28,7 +28,7 @@ If you would like to discuss this framework, please join the [ERP Academy](https
 - We will call these records: workflow 'types'.
 - Luckily for you, this project creates most of the types you need during installation.
 - Workflow types are important because they help developers write code against workflow concepts - not individual workflow processes. Said another way, they help developers write as little code as is possible to be used as broadly across as many workflow scenarios as is possible. 
-- Workflow rypes are important because you can create actual names/values inside your process that have more meaningful context. For example: a state type = 'started' can be renamed to a state = 'drafted' in the context of document approval.
+- Workflow types are important because you can create actual names/values inside your process that have more meaningful context. For example: a state type = 'started' can be renamed to a state = 'drafted' in the context of document approval.
 - Workflow types are important because you can have multiple names/values for the same type. For example: a state type = 'started' can exist as multiple states = 'drafted' and 'peer review' where both states logically represent the 'started' state type.
 - Types act as a menu to help you create your workflow processes.
 - Here are the types:
@@ -45,7 +45,7 @@ If you would like to discuss this framework, please join the [ERP Academy](https
 - Use your workflow types as a menu to pick process options.
 - You need at least two states (one as a default starting point and one as a final state).
 - Chose one or more actions if you need them. If you do not chose an action, users will be able to manipulate the process state directly.
-- Chose one or more resolutions.
+- Chose two or more resolutions (one as a default starting resolution and at least one as a final resolution).
 - Create transitions between states to direct how a process flows from its default state to one of its final states. If you do not create transitions, users will be able to chose any future state from any previous state in your process.
 - Create one or more groups if you need them. Examples of groups might include: Employees, Managers, HR, Executives and Purchasing.
 - Create one or more targets if you need them. Note that you can target a group or a user in additional the above mentioned target types.
@@ -56,7 +56,7 @@ If you would like to discuss this framework, please join the [ERP Academy](https
 
 ## Architecture
 - private schema holds the internal data structure
-- api schema holds the public interface (both sql and rest)
+- api schema holds the public interface (both sql and rest). Note that you can use sql, rest or both as an interface if you wish.
 - rest interface provided by postgrest
 - webui interface provide by htmx through postgrest
 
