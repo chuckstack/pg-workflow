@@ -5,20 +5,9 @@ The client ui/web tools will use htmx to serve dynamic content.
 There will exist two schemas: 1. private - holding the internal representation of the workflow and 2. public - allowing users of sql and postgrest api to interact with private schema.
 A goal of the project is to maximise AI involvement in the design and development of the project.
 A goal of the project is to maximise AI to help end users design and manage workflows. Said another way, we expect an AI assistant to be able to create, manage and execute workflows upon a user's prompt.
-There are three types of workflow styles we want to support:
+There are four types of workflow styles we want to support:
   1. Traditional workflow: where a request must follow a pre-defined path. This is the most popular form of workflow on the Internet.
   2. Ad-hoc workflow: where a user knows exactly who is responsible for what actions and the user creates the request accordingly. This is the most common used type of workflow in the real world. The request acts like a hot potato bouncing between user and group responsibilities.
   3. queue-based workflows where the simple existence of a non-zero result from select count(*) from some_view will prompt a user or group to action.
   4. checklists - just considering
 
-# Traditional Workflow - Requests, States, Transitions, Actions
-
-## Process
-A Process is the collection of all other data that is unique to a group of users and how they want their Requests approved. In our design, a Process is infrastructure that is used to define and associate most other information in this database.
-
-## User
-Users of the system. Users can also be roles:
-* Process Admin
-* Stakeholder
-
-## State

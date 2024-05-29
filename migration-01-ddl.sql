@@ -104,6 +104,7 @@ COMMENT ON TABLE chuboe_resolution_type IS 'Table that defines the types of reso
 INSERT INTO chuboe_resolution_type (chuboe_resolution_type_uu, search_key, name, description, is_default)
 VALUES
   ('3dc67c8a-5649-4827-9ef6-4955a2edc39b', 'none', 'None', 'Initial resolution for a newly created request.', true),
+  ('82cd3f23-34b9-4298-b418-2abbd69688e2', 'pending', 'Pending more information', 'A resolution indicating more information is needed before a decision is made.', false),
   ('03d9c94e-3fbc-4be5-9f2f-b3f99fd93f27', 'approved', 'Approved', 'A resolution indicating approval.', false),
   ('b27f21d3-0a16-4233-89b3-3f5cfc360729', 'success', 'Success', 'A resolution indicating success.', false),
   ('cb2c95c0-e73a-46df-b56a-ac5612b388b3', 'denied', 'Denied', 'A resolution indicating the request has been denied.', false),
@@ -142,6 +143,7 @@ VALUES
   ('afd4df79-6f85-423c-8d6d-31e320989320', 'prepare', 'Prepare', ''),
   ('827e84ab-1494-478d-bcff-cb1815ca8f28', 'complete', 'Complete', ''),
   ('b9e49598-7b41-4fd2-8ad1-274b6d24ecf8', 'close', 'Close', ''),
+  --('69d32e62-f58b-4823-b704-930d75199da4', 'next', 'Go to next State', '') --need to think about this more...
   ('82d3b937-5e70-428a-b981-3262b6b09003', 'submit', 'Submit', ''),
   ('58494b59-a9aa-4cbc-a424-3f23ee660cf9', 'resubmit', 'Resubmit', ''),
   ('02117e4c-eb14-4771-b87f-034ad044c8c9', 'approve', 'Approve', ''),
@@ -151,7 +153,9 @@ VALUES
   ('88a91b75-9e96-4371-a00d-fcbc59be9247', 'execute', 'Execute', ''),
   ('4b96b233-ab3a-48aa-a7d9-37ba2b7e763c', 'cancel', 'Cancel', ''),
   ('a412a325-999a-4f49-8333-906ffc36597a', 'restart', 'Restart', ''),
-  ('813800e1-d194-4d56-92d9-49b44e33f497', 'resolve', 'Resolve', '');
+  ('813800e1-d194-4d56-92d9-49b44e33f497', 'resolve', 'Resolve', ''),
+  ('d6789b41-9bb1-43f7-a05b-7076a508bb1a', 'more-info', 'Request more information', '')
+;
 
 
 CREATE TABLE chuboe_process (
@@ -356,8 +360,8 @@ COMMENT ON TABLE chuboe_transition_activity_lnk IS 'Table that links activities 
 
 CREATE TABLE chuboe_action_transition_lnk (
   chuboe_transition_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  chuboe_transition_uu UUID NOT NULL,
   chuboe_action_uu UUID NOT NULL,
+  chuboe_transition_uu UUID NOT NULL,
   chuboe_resolution_uu UUID,
   FOREIGN KEY (chuboe_transition_uu) REFERENCES chuboe_transition(chuboe_transition_uu),
   FOREIGN KEY (chuboe_action_uu) REFERENCES chuboe_action(chuboe_action_uu),

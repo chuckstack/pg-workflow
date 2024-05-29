@@ -1,0 +1,12 @@
+set search_path = 'private';
+select chuboe_wf_template_create_approval();
+select 'state' as coming_next;
+select * from chuboe_state;
+select 'action' as coming_next;
+select * from chuboe_action;
+select 'resolution' as coming_next;
+select * from chuboe_resolution;
+select 'transition' as coming_next;
+select * from chuboe_transition;
+select 'action transition link' as coming_next;
+select * from chuboe_action_transition_lnk;

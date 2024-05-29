@@ -7,7 +7,7 @@
     -- chuboe_create_process_details_from_process (see below)
     -- chuboe_create_request_from_process (see below)
 -- list of imagined triggers --
-    -- here...
+    -- need a trigger on the chuboe_transition table to set a to-be-created chuboe_process_uu field. This is not normalized; however, it is extremely convenient. Consider added this same type of trigger on other process oriented tables that current do not have a request_uu or process_uu
 
 set search_path = private;
 

@@ -85,3 +85,4 @@ If you would like to discuss this framework, please join the [ERP Academy](https
 - refresh work-instruction-admin.txt
 - refresh example => employee-leave
 - consider moving schema to wf-private (from private)
+- plan for translation
