@@ -13,7 +13,9 @@ The purpose of this project is to make pragmatic open source workflow management
 1. Checklists for simply tracking what needs to happen and letting everyone know when stuff is done.
 
 ## Learn More
-If you would like to discuss this framework, please join the [ERP Academy](https://erp-academy.chuckboecking.com/?page_id=6). [Here are the frequently asked questions -  FAQ](https://erp-academy.chuckboecking.com/?page_id=32). [Here is that others have to say about me](https://erp-academy.chuckboecking.com/?page_id=2696).
+If you would like to discuss this framework, please join the [ERP Academy](https://erp-academy.chuckboecking.com/?page_id=6). 
+- [Here are the frequently asked questions -  FAQ](https://erp-academy.chuckboecking.com/?page_id=32)
+- [Here is that others have to say about me](https://erp-academy.chuckboecking.com/?page_id=2696)
 
 ## Traditional Workflow Concepts
 
@@ -75,7 +77,7 @@ If you would like to discuss this framework, please join the [ERP Academy](https
 - discuss the difference between groups and roles
 - discuss the relationship between targets and groups
 
-## todo:
+## Todo
 - see migration.todo
 - add the ability to target an individual user and role (as well as a group)
 - refactor table names to include chuboe_wf to designate that they belong to a specific app (do not change chuboe_user or chuboe_role)
