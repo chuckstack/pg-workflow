@@ -75,8 +75,9 @@ If you would like to discuss this framework, please join the [ERP Academy](https
 - discuss the difference between groups and roles
 - discuss the relationship between targets and groups
 
-todo:
+## todo:
+- see migration.todo
 - add the ability to target an individual user and role (as well as a group)
 - refactor table names to include chuboe_wf to designate that they belong to a specific app (do not change chuboe_user or chuboe_role)
-
-The chuboe_activity straddles both the concepts of "activity" and "task".
+- refresh work-instruction-admin.txt
+- refresh example => employee-leave
