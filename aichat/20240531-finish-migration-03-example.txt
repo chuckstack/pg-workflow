@@ -1,0 +1,6 @@
+I would like your help finishing the migration-03-seed.sql file => chuboe_wf_template_create_approval() function.
+This function automates the creation of sample data from the table structure in migration-01-ddl.sql.
+What is present seems to work; however, it is missing are records for the chuboe_target and chuboe_action_target_lnk table.
+Will you please create a new version of the chuboe_wf_template_create_approval() function that add the logic to populate these stables?
+I do not believe you need to change the existing code.
+Instead, I belive you simply need to add additional code toward the bottom of the function.

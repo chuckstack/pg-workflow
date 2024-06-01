@@ -1,0 +1,55 @@
+Here's the updated version of the `chuboe_wf_template_create_approval()` function that includes the logic to populate the `chuboe_target` and `chuboe_action_target_lnk` tables:
+
+```sql
+CREATE OR REPLACE FUNCTION chuboe_wf_template_create_approval() RETURNS uuid AS $$
+DECLARE
+    v_process_uu uuid;
+    v_requester_target_uu uuid;
+    v_stakeholder_target_uu uuid;
+    v_group_member_target_uu uuid;
+    v_process_admin_target_uu uuid;
+BEGIN
+    set search_path = private;
+    
+    -- ... (existing code for creating temporary tables, process, states, actions, resolutions, and transitions) ...
+    
+    --------------------------------
+    -- create the process targets
+    --------------------------------
+    INSERT INTO chuboe_target (chuboe_target_type_uu, chuboe_process_uu, search_key, name, description)
+    VALUES 
+        ('77c9aad9-5ff4-4fd0-a6fe-81295e419aea', v_process_uu, 'requester', 'Requester', 'The user who initiated the request.'),
+        ('7477f448-46c6-48a5-8f60-2c73aa124d28', v_process_uu, 'stakeholder', 'Stakeholders', 'The users who are stakeholders of the request.'),
+        ('517d9c38-85fd-4567-9ce4-d59e3d51d0af', v_process_uu, 'group_member', 'Group Members', 'The users who are members of the group associated with the request.'),
+        ('1b405fc3-90cf-41a5-9ed9-b60d35cfa44c', v_process_uu, 'process_admin', 'Process Admins', 'The users who are administrators of the process associated with the request.')
+    RETURNING chuboe_target_uu INTO v_requester_target_uu, v_stakeholder_target_uu, v_group_member_target_uu, v_process_admin_target_uu;
+
+    --------------------------------
+    -- create the action target links
+    --------------------------------
+    INSERT INTO chuboe_action_target_lnk (chuboe_action_uu, chuboe_target_uu)
+    SELECT a.chuboe_action_uu, v_requester_target_uu
+    FROM chuboe_action a
+    WHERE a.chuboe_process_uu = v_process_uu AND a.search_key IN ('submit', 'close');
+
+    INSERT INTO chuboe_action_target_lnk (chuboe_action_uu, chuboe_target_uu)
+    SELECT a.chuboe_action_uu, v_group_member_target_uu
+    FROM chuboe_action a
+    WHERE a.chuboe_process_uu = v_process_uu AND a.search_key IN ('approve', 'more-info', 'deny');
+
+    RETURN v_process_uu;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+In this updated version, I added the following changes:
+
+1. I declared additional variables to store the UUIDs of the created targets.
+
+2. I added an INSERT statement to populate the `chuboe_target` table with the requester, stakeholder, group member, and process admin targets for the approval process. The UUIDs of the created targets are stored in the corresponding variables.
+
+3. I added two INSERT statements to populate the `chuboe_action_target_lnk` table. The first statement links the "submit" and "close" actions to the requester target, indicating that the requester can perform these actions. The second statement links the "approve", "more-info", and "deny" actions to the group member target, indicating that group members can perform these actions.
+
+With these additions, the function now creates the necessary records in the `chuboe_target` and `chuboe_action_target_lnk` tables as part of the approval process template creation.
+
+Please note that you may need to adjust the target types and action-target mappings based on your specific requirements for the approval process.
