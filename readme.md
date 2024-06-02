@@ -17,6 +17,12 @@ If you would like to discuss this framework, please join the [transction-academy
 - [Here are the frequently asked questions -  FAQ](https://erp-academy.chuckboecking.com/?page_id=32)
 - [Here is that others have to say about me](https://erp-academy.chuckboecking.com/?page_id=2696)
 
+## Roadmap
+- Release domain and training
+- Release api schema to allow for direct sql interaction
+- Release rest api through PostgREST
+- Release cli interface
+
 ## Traditional Workflow Concepts
 
 ### Level 0 explanation: basic concepts
