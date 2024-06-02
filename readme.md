@@ -13,7 +13,7 @@ The purpose of this project is to make pragmatic open source workflow management
 1. Checklists for simply tracking what needs to happen and letting everyone know when stuff is done.
 
 ## Learn More
-If you would like to discuss this framework, please join the [ERP Academy](https://erp-academy.chuckboecking.com/?page_id=6). 
+If you would like to discuss this framework, please join the [transction-academy](https://buy.stripe.com/7sIbLIeeU3oT4IEfYY). 
 - [Here are the frequently asked questions -  FAQ](https://erp-academy.chuckboecking.com/?page_id=32)
 - [Here is that others have to say about me](https://erp-academy.chuckboecking.com/?page_id=2696)
 
