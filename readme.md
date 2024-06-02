@@ -18,7 +18,8 @@ If you would like to discuss this framework, please join the [transction-academy
 - [Here is that others have to say about me](https://erp-academy.chuckboecking.com/?page_id=2696)
 
 ## Roadmap
-- Release domain and training
+- Produce sample workflows (approval-traditional, approval-simple, action-simple) - in progress
+- Release domain with AI inference
 - Release api schema to allow for direct sql interaction
 - Release rest api through PostgREST
 - Release cli interface
