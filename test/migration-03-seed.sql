@@ -1,5 +1,5 @@
 set search_path = 'private';
-select stack_wf_template_create_approval(true) as process_uu;
+select stack_wf_template_process_create_approval_traditional(true) as process_uu;
 select 'process' as coming_next;
 select * from stack_wf_process;
 select 'state' as coming_next;
