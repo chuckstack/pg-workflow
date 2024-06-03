@@ -1,1 +1,1 @@
-refactored from chuboe to stack_wf
+added comment to function to create sample traditional approval workflow

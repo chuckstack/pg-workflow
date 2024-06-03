@@ -1,7 +1,5 @@
+-- see function comments for formal description of what each function performs
 -- the purpose of this file is to provide records that help kickstart process for the approval-traditional use case.
-
--- todo:
-   -- replace v_process_uu - now in kv table
 
 set search_path = private;
 
@@ -201,9 +199,4 @@ BEGIN
     -- The temporary table will be automatically dropped when the session ends
 END;
 $$ LANGUAGE plpgsql;
-
---select 'here here here';
---
---select * from pg_temp.kv;
---select * from pg_temp.kv_transition;
---select * from pg_temp.kv_action_transition;
+COMMENT ON function stack_wf_template_create_approval(boolean) IS 'The purpose of this function is to automate the creation of a tradtional approval workflow.'
