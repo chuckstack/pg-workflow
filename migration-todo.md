@@ -13,6 +13,8 @@
 
 ## framework
 - finish migration-02 to pupulate the request
+- create function to list actions (and by whom)
+- create function to execute action
 - manage link automation (create stuff, prevent stuff, list what's next, list who can do next, etc...)
 
 -- conventions, questions, and thoughts

@@ -1,0 +1,51 @@
+Here's an example of creating an employee leave approval request using the provided framework:
+
+```sql
+-- Create the approval process template
+SELECT stack_wf_template_create_approval(true);
+
+-- Get the process UUID
+SELECT stack_wf_process_uu FROM stack_wf_process WHERE search_key = 'sample_approval';
+
+-- Assuming the process UUID is 'abcd1234-...'
+
+-- Create a new request for the approval process
+SELECT stack_wf_request_create_from_process('sample_approval', 'employee@company.com');
+
+-- Assuming the request UUID returned is 'xyz789-...'
+
+-- Add some request data
+INSERT INTO stack_wf_request_data (stack_wf_request_uu, name, value)
+VALUES 
+    ('xyz789-...', 'leave_type', 'Vacation'),
+    ('xyz789-...', 'start_date', '2023-07-01'),
+    ('xyz789-...', 'end_date', '2023-07-05'),
+    ('xyz789-...', 'reason', 'Taking a family vacation');
+
+-- Add a note to the request
+INSERT INTO stack_wf_request_note (stack_wf_request_uu, stack_user_uu, note)
+VALUES ('xyz789-...', 
+        (SELECT stack_user_uu FROM stack_user WHERE email = 'employee@company.com'),
+        'Submitting leave request for approval');
+
+-- Submit the request (transition from 'started' to 'submitted')
+INSERT INTO stack_wf_request_activity_history (stack_wf_request_uu, stack_wf_activity_uu, stack_wf_transition_uu, stack_wf_target_uu, stack_user_uu)
+VALUES ('xyz789-...',
+        (SELECT stack_wf_activity_uu FROM stack_wf_activity WHERE search_key = 'submit' AND stack_wf_process_uu = 'abcd1234-...'),
+        (SELECT stack_wf_transition_uu FROM stack_wf_transition 
+         WHERE stack_wf_state_current_uu = (SELECT stack_wf_state_uu FROM stack_wf_state WHERE search_key = 'started' AND stack_wf_process_uu = 'abcd1234-...')
+           AND stack_wf_state_next_uu = (SELECT stack_wf_state_uu FROM stack_wf_state WHERE search_key = 'submitted' AND stack_wf_process_uu = 'abcd1234-...')),
+        (SELECT stack_wf_target_uu FROM stack_wf_target WHERE search_key = 'requester'),
+        (SELECT stack_user_uu FROM stack_user WHERE email = 'employee@company.com'));
+```
+
+This example does the following:
+
+1. Creates the approval process template using `stack_wf_template_create_approval(true)`.
+2. Gets the process UUID for the 'sample_approval' process.
+3. Creates a new request for the 'sample_approval' process with the requester email 'employee@company.com' using `stack_wf_request_create_from_process()`.
+4. Adds request data like leave type, start date, end date and reason using `stack_wf_request_data` table.
+5. Adds a note to the request using `stack_wf_request_note` table. 
+6. Submits the request by transitioning it from 'started' to 'submitted' state. This is done by inserting a record into `stack_wf_request_activity_history` table with appropriate activity, transition, target and user details.
+
+The request is now ready for manager approval, which can be done by updating the `stack_wf_request_activity_history` table with the manager's action.

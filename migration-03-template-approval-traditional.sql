@@ -66,26 +66,34 @@ BEGIN
     -- The kv table is where you (the user who might be modifying this function) define your custom states, actions, resolution and targets you want in your newly created process.
 	-- insert entities into the temporary table - one value of this step is that it creates uuids for future use
     INSERT INTO kv (table_name,search_key,name,description,search_key_type) values
-        ('stack_wf_process',    'sample_approval', 'Sample approval process', 'Template/example of an approval process.','traditional'),
-        ('stack_wf_state',      'started',         'New approval request', 'New xxx request',null),
-        ('stack_wf_state',      'submitted',       'Approval request submitted', 'xxx request submitted to manager',null),
-        ('stack_wf_state',      'replied',         'Approval request replied', 'Manager replied to xxx request',null),
-        ('stack_wf_state',      'finalized',       'Approval request final closed', 'xxx request final closed',null),
-        ('stack_wf_action',     'submit',          'Submit Request', 'Employee submits the xxx request',null),
-        ('stack_wf_action',     'approve',         'Approve Request', 'Manager approves the xxx request',null),
-        ('stack_wf_action',     'more-info',       'Request More Info', 'Manager needs more informationo to approve  xxx request',null),
-        ('stack_wf_action',     'deny',            'Deny Request', 'Manager denies the xxx request',null),
-        ('stack_wf_action',     'close',           'Close Request', 'Employee closes the xxx request as acknowledgement of the response',null),
-        ('stack_wf_resolution', 'none', 			  null, null,null),
-        ('stack_wf_resolution', 'approved', 		  null, null,null),
-        ('stack_wf_resolution', 'pending', 		  null, null,null),
-        ('stack_wf_resolution', 'denied', 		  null, null,null),
-        ('stack_wf_group',      'managers', 		  'Managers', null,null),
-        ('stack_wf_target',     'requester', 	     'Requester', 'The user who initiated the request.',null),
-        ('stack_wf_target',     'stakeholder',  	 'Stakeholders', 'The users who are stakeholders of the request.',null),
-        ('stack_wf_target',     'group_member',    'Group Members', 'The users who are members of the group associated with the request.',null),
-        ('stack_wf_target',     'process_admin',   'Process Admins', 'The users who are administrators of the process associated with the request.',null)
+        ('stack_wf_process',    'approval_traditional', 'Traditional approval', 'Template of a traditional approval process.','traditional'),
+        ('stack_wf_state',      'started',              'New approval request', 'New xxx request',null),
+        ('stack_wf_state',      'submitted',            'Approval request submitted', 'xxx request submitted to manager',null),
+        ('stack_wf_state',      'replied',              'Approval request replied', 'Manager replied to xxx request',null),
+        ('stack_wf_state',      'finalized',            'Approval request final closed', 'xxx request final closed',null),
+        ('stack_wf_action',     'submit',               'Submit Request', 'Employee submits the xxx request',null),
+        ('stack_wf_action',     'approve',              'Approve Request', 'Manager approves the xxx request',null),
+        ('stack_wf_action',     'more-info',            'Request More Info', 'Manager needs more informationo to approve  xxx request',null),
+        ('stack_wf_action',     'deny',                 'Deny Request', 'Manager denies the xxx request',null),
+        ('stack_wf_action',     'close',                'Close Request', 'Employee closes the xxx request as acknowledgement of the response',null),
+        ('stack_wf_resolution', 'none', 		         null, null,null),
+        ('stack_wf_resolution', 'approved', 	         null, null,null),
+        ('stack_wf_resolution', 'pending', 		         null, null,null),
+        ('stack_wf_resolution', 'denied', 		         null, null,null),
+        ('stack_wf_group',      'managers',             'Managers', null,null),
+        ('stack_wf_target',     'requester',            'Requester', 'The user who initiated the request.',null),
+        ('stack_wf_target',     'stakeholder',          'Stakeholders', 'The users who are stakeholders of the request.',null),
+        ('stack_wf_target',     'group_member',         'Group Members', 'The users who are members of the group associated with the request.',null),
+        ('stack_wf_target',     'process_admin',        'Process Admins', 'The users who are administrators of the process associated with the request.',null)
     ;
+
+    IF p_is_template THEN
+        UPDATE kv
+        set search_key = search_key || '_template',
+        name = name || ' template'
+        where table_name = 'stack_wf_process'
+        ;
+    END IF;
     ----DEBUG
     --SELECT count(*) FROM kv INTO v_return_count;
     --RAISE NOTICE 'Inserted % records into kv', v_return_count;

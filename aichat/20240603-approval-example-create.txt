@@ -1,0 +1,5 @@
+I would like your help creating an example employee leave approval request from the below framework.
+Here are the details:
+- I have included the database domain for your reference: migration-01-ddl.sql
+- You can assume the migration-03-template-approval-traditional.sql script has already been executed to create a process named
+- You will use the stack_wf_request_create_from_process(...) function from the migration-02-func.sql file to create the request from the process.

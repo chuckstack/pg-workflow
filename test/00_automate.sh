@@ -8,7 +8,7 @@ echo '-------begin migration-02-------'
 psql -h 10.178.252.246 -d db_20240527_01 -U adempiere -f migration-02-func.sql
 echo '-------end migration-02-------'
 echo '-------begin migration-03-------'
-psql -h 10.178.252.246 -d db_20240527_01 -U adempiere -f migration-03-seed.sql
+psql -h 10.178.252.246 -d db_20240527_01 -U adempiere -f migration-03-template-approval-traditional.sql
 echo '-------end migration-03-------'
 echo '-------begin test-------'
 psql -h 10.178.252.246 -d db_20240527_01 -U adempiere -f test/migration-03-seed.sql
