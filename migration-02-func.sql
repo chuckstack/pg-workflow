@@ -4,15 +4,15 @@
 -- When using this file to create examples, tools or interactions, ignore all todo statements.
 
 -- list of imagined functions --
-    -- chuboe_create_process_details_from_process (see below)
-    -- chuboe_create_request_from_process (see below)
+    -- stack_wf_create_process_details_from_process (see below)
+    -- stack_wf_create_request_from_process (see below)
 -- list of imagined triggers --
-    -- need a trigger on the chuboe_transition table to set a to-be-created chuboe_process_uu field. This is not normalized; however, it is extremely convenient. Consider added this same type of trigger on other process oriented tables that current do not have a request_uu or process_uu
+    -- need a trigger on the stack_wf_transition table to set a to-be-created stack_wf_process_uu field. This is not normalized; however, it is extremely convenient. Consider added this same type of trigger on other process oriented tables that current do not have a request_uu or process_uu
 
 set search_path = private;
 
--- Function to create chuboe_process supporting records from an existing chuboe_process
-CREATE OR REPLACE FUNCTION chuboe_create_process_details_from_process(
+-- Function to create stack_wf_process supporting records from an existing stack_wf_process
+CREATE OR REPLACE FUNCTION stack_wf_create_process_details_from_process(
     p_process_search_key_existing VARCHAR,
     p_process_name_new VARCHAR,
     p_process_search_key_new VARCHAR DEFAULT ''
@@ -24,8 +24,8 @@ DECLARE
     v_process_new_uu UUID;
 BEGIN
     -- Get the process UUID based on the process name
-    SELECT chuboe_process_uu INTO v_process_existing_uu
-    FROM chuboe_process
+    SELECT stack_wf_process_uu INTO v_process_existing_uu
+    FROM stack_wf_process
     WHERE search_key = p_process_search_key_existing;
     
     --todo: execute migration-03-seed.sql before completing this function
@@ -44,11 +44,11 @@ BEGIN
     RETURN v_process_existing_uu;
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION chuboe_create_process_details_from_process(varchar,varchar,varchar) is '';
+COMMENT ON FUNCTION stack_wf_create_process_details_from_process(varchar,varchar,varchar) is '';
 
 
--- Function to create a chuboe_request
-CREATE OR REPLACE FUNCTION chuboe_create_request_from_process(
+-- Function to create a stack_wf_request
+CREATE OR REPLACE FUNCTION stack_wf_create_request_from_process(
     p_process_search_key VARCHAR,
     p_requester_email VARCHAR
 )
@@ -60,40 +60,40 @@ DECLARE
     v_request_uu UUID;
 BEGIN
     -- Get the process UUID based on the process name
-    SELECT chuboe_process_uu INTO v_process_uu
-    FROM chuboe_process
+    SELECT stack_wf_process_uu INTO v_process_uu
+    FROM stack_wf_process
     WHERE search_key = p_process_search_key;
 
     -- Get the requester UUID based on the requester email
-    SELECT chuboe_user_uu INTO v_requester_uu
-    FROM chuboe_user
+    SELECT stack_user_uu INTO v_requester_uu
+    FROM stack_user
     WHERE email = p_requester_email;
 
     -- Get the initial state UUID based on the state name and process UUID
-    SELECT chuboe_state_uu INTO v_state_initial_uu
-    FROM chuboe_state s
-    JOIN chuboe_state_type st on s.chuboe_state_type_uu = st.chuboe_state_type_uu
-    WHERE st.is_default=true AND s.chuboe_process_uu = v_process_uu;
+    SELECT stack_wf_state_uu INTO v_state_initial_uu
+    FROM stack_wf_state s
+    JOIN stack_wf_state_type st on s.stack_wf_state_type_uu = st.stack_wf_state_type_uu
+    WHERE st.is_default=true AND s.stack_wf_process_uu = v_process_uu;
     --todo: select first to account for multiple
 
     -- Insert a new request
-    INSERT INTO chuboe_request (chuboe_process_uu, search_key, date_requested, chuboe_user_uu, chuboe_state_uu)
+    INSERT INTO stack_wf_request (stack_wf_process_uu, search_key, date_requested, stack_user_uu, stack_wf_state_uu)
     VALUES (v_process_uu, p_process_search_key, NOW(), v_requester_uu, v_state_initial_uu)
-    RETURNING chuboe_request_uu INTO v_request_uu;
+    RETURNING stack_wf_request_uu INTO v_request_uu;
 
     -- Add the requester as a stakeholder
-    INSERT INTO chuboe_request_stakeholder_lnk (chuboe_request_uu, chuboe_user_uu)
+    INSERT INTO stack_wf_request_stakeholder_lnk (stack_wf_request_uu, stack_user_uu)
     VALUES (v_request_uu, v_requester_uu);
 
     RETURN v_request_uu;
 
     -- Add an initial note to the request
-    --INSERT INTO chuboe_request_note (chuboe_request_uu, chuboe_user_uu, note)
+    --INSERT INTO stack_wf_request_note (stack_wf_request_uu, stack_user_uu, note)
     --VALUES (v_request_uu, v_requester_uu, 'Request created');
     --todo: come back to this - it needs more thought
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION chuboe_create_request_from_process(varchar,varchar) is 'This function helps users create requests from processes. The goal of this function is to provide the easiest way (with the fewest parameters) to create a new request. 
+COMMENT ON FUNCTION stack_wf_create_request_from_process(varchar,varchar) is 'This function helps users create requests from processes. The goal of this function is to provide the easiest way (with the fewest parameters) to create a new request. 
 p_process_search_key is the process.search_key value. 
 p_requester_email is the user.email who is requesting the new instance. 
 ';
@@ -104,9 +104,9 @@ p_requester_email is the user.email who is requesting the new instance.
 --CREATE OR REPLACE FUNCTION log_request_creation()
 --RETURNS TRIGGER AS $$
 --BEGIN
---    -- Insert a record into the chuboe_request_action_log table
---    INSERT INTO chuboe_request_action_log (chuboe_request_uu, chuboe_action_uu, chuboe_transition_uu, is_active, is_processed)
---    VALUES (NEW.chuboe_request_uu, NULL, NULL, true, false);
+--    -- Insert a record into the stack_wf_request_action_log table
+--    INSERT INTO stack_wf_request_action_log (stack_wf_request_uu, stack_wf_action_uu, stack_wf_transition_uu, is_active, is_processed)
+--    VALUES (NEW.stack_wf_request_uu, NULL, NULL, true, false);
 --
 --    RETURN NEW;
 --END;
@@ -114,7 +114,7 @@ p_requester_email is the user.email who is requesting the new instance.
 --
 ---- Trigger to log request creation
 --CREATE TRIGGER tr_log_request_creation
---AFTER INSERT ON chuboe_request
+--AFTER INSERT ON stack_wf_request
 --FOR EACH ROW
 --EXECUTE FUNCTION log_request_creation();
 
