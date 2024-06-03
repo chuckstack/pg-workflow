@@ -18,6 +18,7 @@
   -- is_template is a boolean that indicates if a record exists for the purpose of cloning.
   -- when naming columns the noun comes first and the adjective comes next. Example: stack_wf_state_next_uu where state is the noun and next is the adjective. The benefit of this approach is that like columns (and the resulting methods/calls) appear next to each other alphabetically.
   -- concept of function => create_from vs create_into -- attempt to support both when possible
+  -- use text (over varchar with unspecified length)
 
 create schema if not exists private;
 set search_path = private;
