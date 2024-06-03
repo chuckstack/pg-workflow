@@ -321,6 +321,7 @@ COMMENT ON TABLE stack_wf_request_stakeholder_lnk IS 'Table that links a user to
 -- todo: developer note: determine if this table is really needed. There is already a stack_wf_group (role) table that can be used to create a stakeholder group.
 
 CREATE TABLE stack_wf_transition (
+  search_key VARCHAR(255) NOT NULL,
   stack_wf_transition_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_state_current_uu UUID NOT NULL,
   stack_wf_state_next_uu UUID NOT NULL,

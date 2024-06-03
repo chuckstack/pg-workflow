@@ -181,8 +181,8 @@ BEGIN
     --------------------------------
     -- create the process transitions
     --------------------------------
-    INSERT INTO stack_wf_transition (stack_wf_transition_uu, stack_wf_state_current_uu, stack_wf_state_next_uu, stack_wf_resolution_uu)
-    SELECT tt.uu, tt.stack_wf_state_from_uu, tt.stack_wf_state_to_uu, tt.stack_wf_resolution_uu
+    INSERT INTO stack_wf_transition (search_key, stack_wf_transition_uu, stack_wf_state_current_uu, stack_wf_state_next_uu, stack_wf_resolution_uu)
+    SELECT tt.search_key, tt.uu, tt.stack_wf_state_from_uu, tt.stack_wf_state_to_uu, tt.stack_wf_resolution_uu
     from kv_transition tt
     ;
 
