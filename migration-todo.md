@@ -1,11 +1,10 @@
 # todos
 
 ## next
-- ddl: transition search key
 - framework: finish migration-02 to pupulate the request
 
 ## ddl
-- add search key to transition table
+- 
 
 ## templates
 - update migration-03 to include link records

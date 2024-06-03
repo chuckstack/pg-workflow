@@ -67,6 +67,8 @@ BEGIN
     FROM stack_user
     WHERE email = p_requester_email;
 
+    --todo: if v_requester_uu is null, throw expception
+
     -- Get the initial state UUID based on the state name and process UUID
     SELECT stack_wf_state_uu INTO v_state_initial_uu
     FROM stack_wf_state s
