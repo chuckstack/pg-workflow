@@ -12,7 +12,7 @@
 set search_path = private;
 
 -- Function to create stack_wf_process supporting records from an existing stack_wf_process
-CREATE OR REPLACE FUNCTION stack_wf_create_process_details_from_process(
+CREATE OR REPLACE FUNCTION stack_wf_process_create_from_to_process(
     p_process_search_key_existing VARCHAR,
     p_process_name_new VARCHAR,
     p_process_search_key_new VARCHAR DEFAULT ''
@@ -27,16 +27,14 @@ BEGIN
     SELECT stack_wf_process_uu INTO v_process_existing_uu
     FROM stack_wf_process
     WHERE search_key = p_process_search_key_existing;
-    
-    --todo: execute migration-03-seed.sql before completing this function
-    --todo:copy over records (and their link table records)
-      -- state
-      -- activity
-      -- action
-      -- target
-      -- resolution
-      -- transition
 
+    --is this create_from or create_into or both?
+    
+    -- todo: steps:
+        -- params: process_from_uu, process_to_uu, search_key_new, name_new, description_new
+        -- create pg_temp.kv (similar to migration-03) (uu, table_name, previous_uu)
+        -- iterate across all tables to create new records (process, state, action, etc...) to populate kv
+        -- iterate across kv records to insert into new tables
 
     --todo: update pass back the real v_process_new_uu
     select v_process_existing_uu into v_process_new_uu;
@@ -44,11 +42,11 @@ BEGIN
     RETURN v_process_existing_uu;
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION stack_wf_create_process_details_from_process(varchar,varchar,varchar) is '';
+COMMENT ON FUNCTION stack_wf_process_create_from_to_process(varchar,varchar,varchar) is '';
 
 
 -- Function to create a stack_wf_request
-CREATE OR REPLACE FUNCTION stack_wf_create_request_from_process(
+CREATE OR REPLACE FUNCTION stack_wf_request_create_from_process(
     p_process_search_key VARCHAR,
     p_requester_email VARCHAR
 )
@@ -93,7 +91,7 @@ BEGIN
     --todo: come back to this - it needs more thought
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION stack_wf_create_request_from_process(varchar,varchar) is 'This function helps users create requests from processes. The goal of this function is to provide the easiest way (with the fewest parameters) to create a new request. 
+COMMENT ON FUNCTION stack_wf_request_create_from_process(varchar,varchar) is 'This function helps users create requests from processes. The goal of this function is to provide the easiest way (with the fewest parameters) to create a new request. 
 p_process_search_key is the process.search_key value. 
 p_requester_email is the user.email who is requesting the new instance. 
 ';
