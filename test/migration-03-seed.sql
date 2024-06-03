@@ -1,5 +1,5 @@
 set search_path = 'private';
-select chuboe_wf_template_create_approval();
+select chuboe_wf_template_create_approval(true);
 select 'state' as coming_next;
 select * from chuboe_state;
 select 'action' as coming_next;

@@ -40,7 +40,8 @@ CREATE TABLE chuboe_process_type (
   chuboe_process_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   search_key VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
-  description TEXT
+  description TEXT,
+  UNIQUE (search_key)
 );
 COMMENT ON TABLE chuboe_process_type IS 'Table that represents the types of processes. A process type is a set of standardized, cross-process representations of the types of processes that exist. The purpose of this table is to provide reporting options for the resulting workflow processes and requests. The values in this table are near static, and they will not change often.';
 
@@ -57,7 +58,8 @@ CREATE TABLE chuboe_target_type (
   chuboe_target_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   search_key VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
-  description TEXT
+  description TEXT,
+  UNIQUE (search_key)
 );
 COMMENT ON TABLE chuboe_target_type IS 'Table that represents the types of targets or recipients of actions. A target type is a set of standardized, cross-process representations of groups that might exist across multiple processes. The purpose of this table is to provide developers the least number of options to code scenarios against. The values in this table are near static, and they will not change often.';
 
@@ -75,7 +77,8 @@ CREATE TABLE chuboe_state_type (
   search_key VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
   is_default BOOLEAN DEFAULT FALSE,
-  description TEXT
+  description TEXT,
+  UNIQUE (search_key)
 );
 COMMENT ON TABLE chuboe_state_type IS 'Table that defines the types of states of a request. It is important to note the difference between state and resolution. For example, a state might be "completed" but the resolution might be "Successful" or "failed". State type is a set of standardized, cross-process representations of states that might exist across multiple processes. The purpose of this table is to provide developers the least number of options to code scenarios against. The values in this table are near static, and they will not change often. See also: chuboe_state.';
 
@@ -95,7 +98,8 @@ CREATE TABLE chuboe_resolution_type (
   search_key VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
   is_default BOOLEAN DEFAULT FALSE,
-  description TEXT
+  description TEXT,
+  UNIQUE (search_key)
 );
 COMMENT ON TABLE chuboe_resolution_type IS 'Table that defines the types of resolutions of a request. It is important to note the difference between state and resolution. For example, a state might be "completed" but the resolution might be "Successful" or "failed". Resolution type is a set of standardized, cross-process representations of resolutions that might exist across multiple processes. The purpose of this table is to provide developers the least number of options to code scenarios against. The values in this table are near static, and they will not change often. See also: chuboe_resolution.';
 
@@ -114,7 +118,8 @@ CREATE TABLE chuboe_activity_type (
   chuboe_activity_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   search_key VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
-  description TEXT
+  description TEXT,
+  UNIQUE (search_key)
 );
 COMMENT ON TABLE chuboe_activity_type IS 'Table that defines the types of activities that can result from a request transitioning from one state to another. You might notice there is no concept of a task in this design. The activity is what should be done. The chuboe_request_action_history table represent what pending task is to be done or what task was done. Activity type is a set of standardized, cross-process representations of the activities that might exist across multiple processes. The purpose of this table is to provide developers the least number of options to code scenarios against. The values in this table are near static, and they will not change often. See also: chuboe_activity.';
 
@@ -132,7 +137,8 @@ CREATE TABLE chuboe_action_type (
   chuboe_action_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   search_key VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
-  description TEXT
+  description TEXT,
+  UNIQUE (search_key)
 );
 COMMENT ON TABLE chuboe_action_type IS 'Table that defines the types of actions that can be performed to instigate a change in state. Action type is a set of standardized, cross-process representations of the actions that might exist across multiple processes. The purpose of this table is to provide developers the least number of options to code scenarios against. The values in this table are near static, and they will not change often. See also: chuboe_action.';
 

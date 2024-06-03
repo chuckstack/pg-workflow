@@ -1,0 +1,3 @@
+migration-01 -- added search_key unique to type tables.
+migration-03 -- added search_key_type to kt temp table.
+migration-03 -- finished updating insert statemetns to use the newly created temp tables and functions.
