@@ -13,9 +13,9 @@ set search_path = private;
 
 -- Function to create stack_wf_process supporting records from an existing stack_wf_process
 CREATE OR REPLACE FUNCTION stack_wf_process_create_from_to_process(
-    p_process_search_key_existing VARCHAR,
-    p_process_name_new VARCHAR,
-    p_process_search_key_new VARCHAR DEFAULT ''
+    p_process_search_key_existing text,
+    p_process_name_new text,
+    p_process_search_key_new text DEFAULT ''
 )
 --todo: finish - currently partially implemented
 RETURNS UUID AS $$
@@ -42,13 +42,13 @@ BEGIN
     RETURN v_process_existing_uu;
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION stack_wf_process_create_from_to_process(varchar,varchar,varchar) is '';
+COMMENT ON FUNCTION stack_wf_process_create_from_to_process(text,text,text) is '';
 
 
 -- Function to create a stack_wf_request
 CREATE OR REPLACE FUNCTION stack_wf_request_create_from_process(
-    p_process_search_key VARCHAR,
-    p_requester_email VARCHAR
+    p_process_search_key text,
+    p_requester_email text
 )
 RETURNS UUID AS $$
 DECLARE
@@ -93,7 +93,7 @@ BEGIN
     --todo: come back to this - it needs more thought
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION stack_wf_request_create_from_process(varchar,varchar) is 'This function helps users create requests from processes. The goal of this function is to provide the easiest way (with the fewest parameters) to create a new request. 
+COMMENT ON FUNCTION stack_wf_request_create_from_process(text,text) is 'This function helps users create requests from processes. The goal of this function is to provide the easiest way (with the fewest parameters) to create a new request. 
 p_process_search_key is the process.search_key value. 
 p_requester_email is the user.email who is requesting the new instance. 
 ';

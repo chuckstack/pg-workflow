@@ -7,7 +7,10 @@ set search_path = private;
 -- approval process workflow seed --
 ------------------------------------
 
-CREATE OR REPLACE FUNCTION stack_wf_template_process_create_approval_traditional(p_is_template boolean) RETURNS uuid AS $$
+CREATE OR REPLACE FUNCTION stack_wf_template_process_create_approval_traditional(
+    p_is_template boolean,
+    p_topic text DEFAULT ''
+) RETURNS uuid AS $$
 DECLARE
     v_process_uu uuid;
     v_return_count numeric;
@@ -207,4 +210,4 @@ BEGIN
     -- The temporary table will be automatically dropped when the session ends
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON function stack_wf_template_process_create_approval_traditional(boolean) IS 'The purpose of this function is to automate the creation of a tradtional approval workflow.'
+COMMENT ON function stack_wf_template_process_create_approval_traditional(boolean,text) IS 'The purpose of this function is to automate the creation of a tradtional approval workflow.';
