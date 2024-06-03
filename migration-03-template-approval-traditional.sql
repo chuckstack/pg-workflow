@@ -14,6 +14,7 @@ CREATE OR REPLACE FUNCTION stack_wf_template_process_create_approval_traditional
 DECLARE
     v_process_uu uuid;
     v_return_count numeric;
+    v_topic text;
 BEGIN
     set search_path = private,pg_temp;
     
@@ -69,14 +70,14 @@ BEGIN
     -- The kv table is where you (the user who might be modifying this function) define your custom states, actions, resolution and targets you want in your newly created process.
 	-- insert entities into the temporary table - one value of this step is that it creates uuids for future use
     INSERT INTO kv (table_name,search_key,name,description,search_key_type) values
-        ('stack_wf_process',    'approval_traditional', 'Traditional approval', 'Template of a traditional approval process.','traditional'),
+        ('stack_wf_process',    'xxxapproval_traditional', 'Traditional approval xxx', 'xxx traditional approval process','traditional'),
         ('stack_wf_state',      'started',              'New approval request', 'New xxx request',null),
         ('stack_wf_state',      'submitted',            'Approval request submitted', 'xxx request submitted to manager',null),
         ('stack_wf_state',      'replied',              'Approval request replied', 'Manager replied to xxx request',null),
         ('stack_wf_state',      'finalized',            'Approval request final closed', 'xxx request final closed',null),
         ('stack_wf_action',     'submit',               'Submit Request', 'Employee submits the xxx request',null),
         ('stack_wf_action',     'approve',              'Approve Request', 'Manager approves the xxx request',null),
-        ('stack_wf_action',     'more-info',            'Request More Info', 'Manager needs more informationo to approve  xxx request',null),
+        ('stack_wf_action',     'more-info',            'Request More Info', 'Manager needs more informationo to approve xxx request',null),
         ('stack_wf_action',     'deny',                 'Deny Request', 'Manager denies the xxx request',null),
         ('stack_wf_action',     'close',                'Close Request', 'Employee closes the xxx request as acknowledgement of the response',null),
         ('stack_wf_resolution', 'none', 		         null, null,null),
@@ -90,13 +91,30 @@ BEGIN
         ('stack_wf_target',     'process_admin',        'Process Admins', 'The users who are administrators of the process associated with the request.',null)
     ;
 
+    -- udpate proces name with template text if needed
     IF p_is_template THEN
         UPDATE kv
         set search_key = search_key || '_template',
-        name = name || ' template'
+        name = name || ' template',
+        description = description || ' template'
         where table_name = 'stack_wf_process'
         ;
     END IF;
+
+    -- string replace the 'xxx' above
+    IF length(p_topic) > 0 THEN
+        --prefix process
+        select lower(replace(p_topic, ' ','_')) || '_'into v_topic;
+        
+        --update strings
+        UPDATE kv
+        set 
+            search_key = replace(search_key, 'xxx', v_topic), 
+            name = replace(name, 'xxx', p_topic), 
+            description = replace(description, 'xxx', p_topic)
+        ;
+    END IF;
+
     ----DEBUG
     --SELECT count(*) FROM kv INTO v_return_count;
     --RAISE NOTICE 'Inserted % records into kv', v_return_count;
@@ -210,4 +228,4 @@ BEGIN
     -- The temporary table will be automatically dropped when the session ends
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON function stack_wf_template_process_create_approval_traditional(boolean,text) IS 'The purpose of this function is to automate the creation of a tradtional approval workflow.';
+COMMENT ON function stack_wf_template_process_create_approval_traditional(boolean,text) IS 'The purpose of this function is to automate the creation of a tradtional approval workflow. The p_is_template parameter determines if the process is flagged as a template. The p_topic topic looks for the xxx placeholder in the default text and replaces it accordingly.';
