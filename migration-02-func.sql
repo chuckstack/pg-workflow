@@ -12,22 +12,15 @@
 
 -- Function to create stack_wf_process supporting records from an existing stack_wf_process
 CREATE OR REPLACE FUNCTION stack_wf_process_create_from_to_process(
-    p_process_search_key_existing text,
+    p_process_existing_uu uuid,
     p_process_name_new text,
     p_process_search_key_new text DEFAULT ''
 )
 --todo: finish - currently partially implemented
 RETURNS UUID AS $$
 DECLARE
-    v_process_existing_uu UUID;
     v_process_new_uu UUID;
 BEGIN
-    -- Get the process UUID based on the process name
-    SELECT stack_wf_process_uu INTO v_process_existing_uu
-    FROM stack_wf_process
-    WHERE search_key = p_process_search_key_existing;
-
-    --is this create_from or create_into or both?
     
     -- todo: steps:
         -- params: process_from_uu, process_to_uu, search_key_new, name_new, description_new
@@ -36,63 +29,60 @@ BEGIN
         -- iterate across kv records to insert into new tables
 
     --todo: update pass back the real v_process_new_uu
-    select v_process_existing_uu into v_process_new_uu;
+    select p_process_existing_uu into v_process_new_uu;
 
-    RETURN v_process_existing_uu;
+    RETURN v_process_new_uu;
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION stack_wf_process_create_from_to_process(text,text,text) is '';
+COMMENT ON FUNCTION stack_wf_process_create_from_to_process(uuid,text,text) is '';
 
 
 -- Function to create a stack_wf_request
 CREATE OR REPLACE FUNCTION stack_wf_request_create_from_process(
-    p_process_search_key text,
-    p_requester_email text
+    p_process_uu uuid,
+    p_requester_uu uuid
 )
 RETURNS UUID AS $$
 DECLARE
-    v_process_uu UUID;
-    v_requester_uu UUID;
-    v_state_initial_uu UUID;
-    v_request_uu UUID;
+    v_state_initial_uu uuid;
+    v_resolution_initial_uu uuid;
+    v_request_uu uuid;
 BEGIN
-    -- Get the process UUID based on the process name
-    SELECT stack_wf_process_uu INTO v_process_uu
-    FROM stack_wf_process
-    WHERE search_key = p_process_search_key;
+    --todo: if any parameter is null, throw excpetion
 
-    -- Get the requester UUID based on the requester email
-    SELECT stack_user_uu INTO v_requester_uu
-    FROM stack_user
-    WHERE email = p_requester_email;
-
-    --todo: if v_requester_uu is null, throw expception
-
-    -- Get the initial state UUID based on the state name and process UUID
+    -- Get the initial state UUID based on the process UUID
     SELECT stack_wf_state_uu INTO v_state_initial_uu
     FROM stack_wf_state s
     JOIN stack_wf_state_type st on s.stack_wf_state_type_uu = st.stack_wf_state_type_uu
-    WHERE st.is_default=true AND s.stack_wf_process_uu = v_process_uu;
+    WHERE st.is_default=true AND s.stack_wf_process_uu = p_process_uu;
     --todo: select first to account for multiple
 
+    -- Get the initial resolution UUID based on the process UUID
+    SELECT stack_wf_resolution_uu INTO v_resolution_initial_uu
+    FROM stack_wf_resolution r
+    JOIN stack_wf_resolution_type st on r.stack_wf_resolution_type_uu = st.stack_wf_resolution_type_uu
+    WHERE st.is_default=true AND r.stack_wf_process_uu = p_process_uu;
+    --todo: select first to account for multiple
+
+    --todo: fix "some text for now" hard coded variable
     -- Insert a new request
-    INSERT INTO stack_wf_request (stack_wf_process_uu, search_key, date_requested, stack_user_uu, stack_wf_state_uu)
-    VALUES (v_process_uu, p_process_search_key, NOW(), v_requester_uu, v_state_initial_uu)
+    INSERT INTO stack_wf_request (stack_wf_process_uu, search_key, date_requested, stack_user_uu, stack_wf_state_uu, stack_wf_resolution_uu)
+    VALUES (p_process_uu, 'some text for now', NOW(), p_requester_uu, v_state_initial_uu, v_resolution_initial_uu)
     RETURNING stack_wf_request_uu INTO v_request_uu;
 
     -- Add the requester as a stakeholder
     INSERT INTO stack_wf_request_stakeholder_lnk (stack_wf_request_uu, stack_user_uu)
-    VALUES (v_request_uu, v_requester_uu);
+    VALUES (v_request_uu, p_requester_uu);
 
     RETURN v_request_uu;
 
     -- Add an initial note to the request
     --INSERT INTO stack_wf_request_note (stack_wf_request_uu, stack_user_uu, note)
-    --VALUES (v_request_uu, v_requester_uu, 'Request created');
+    --VALUES (v_request_uu, p_requester_uu, 'Request created');
     --todo: come back to this - it needs more thought
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION stack_wf_request_create_from_process(text,text) is 'This function helps users create requests from processes. The goal of this function is to provide the easiest way (with the fewest parameters) to create a new request. 
+COMMENT ON FUNCTION stack_wf_request_create_from_process(uuid,uuid) is 'This function helps users create requests from processes. The goal of this function is to provide the easiest way (with the fewest parameters) to create a new request. 
 p_process_search_key is the process.search_key value. 
 p_requester_email is the user.email who is requesting the new instance. 
 ';
