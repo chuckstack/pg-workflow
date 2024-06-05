@@ -1,7 +1,6 @@
 -- see function comments for formal description of what each function performs
 -- the purpose of this file is to provide records that help kickstart process for the approval-traditional use case.
 
-set search_path = private;
 
 ------------------------------------
 -- approval process workflow seed --
@@ -16,7 +15,6 @@ DECLARE
     v_return_count numeric;
     v_topic text;
 BEGIN
-    set search_path = private,pg_temp;
     
     --------------------------------
     -- create the temporary tables and functions

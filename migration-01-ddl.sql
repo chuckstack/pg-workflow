@@ -20,8 +20,6 @@
   -- concept of function => create_from vs create_into -- attempt to support both when possible
   -- use text (over varchar with unspecified length)
 
-create schema if not exists private;
-set search_path = private;
 
 CREATE TABLE stack_user (
   stack_user_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),

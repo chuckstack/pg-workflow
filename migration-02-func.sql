@@ -9,7 +9,6 @@
 -- list of imagined triggers --
     -- need a trigger on the stack_wf_transition table to set a to-be-created stack_wf_process_uu field. This is not normalized; however, it is extremely convenient. Consider added this same type of trigger on other process oriented tables that current do not have a request_uu or process_uu
 
-set search_path = private;
 
 -- Function to create stack_wf_process supporting records from an existing stack_wf_process
 CREATE OR REPLACE FUNCTION stack_wf_process_create_from_to_process(
