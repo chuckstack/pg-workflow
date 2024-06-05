@@ -26,8 +26,6 @@ v_user_uu=$(psql $psql_test $TEST_PSQL_VAR_ONLY -c " select stack_user_uu from s
 echo "v_user_uu: $v_user_uu"
 echo
 
-#psql $psql_test -c "select * from stack_wf_process where stack_wf_process_uu='$v_process_uu'"
-
 v_request_uu=$(psql $psql_test $TEST_PSQL_VAR_ONLY -c " select stack_wf_request_create_from_process('$v_process_uu', '$v_user_uu') ")
 echo "v_request_uu: $v_request_uu"
 echo
@@ -46,16 +44,25 @@ VALUES
 psql $psql_test -c \
 "
 INSERT INTO stack_wf_request_note (stack_wf_request_uu, stack_user_uu, note)
-VALUES ('$v_request_uu', '$v_user_uu', 'Submitting leave request for approval');
+VALUES ('$v_request_uu', '$v_user_uu', 'Submitting leave request for approval')
+"
+
+psql $psql_test -c \
+"
+SELECT stack_wf_request_get_notes('$v_request_uu',4)
 "
 
 # todo:
+## function to show last x notes
+## function to show request data
+## function to show next available actions (with resolutions)
 ## function to show request summary
 ##   current state,
 ##   current resolution,
+##   request data (array)
 ##   open activities,
 ##   next actions available
+##   last x notes (array)
 ## function to do action
 ##   set state
 ##   create activity history
-## function

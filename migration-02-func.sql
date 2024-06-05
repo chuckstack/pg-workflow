@@ -9,6 +9,30 @@
 -- list of imagined triggers --
     -- need a trigger on the stack_wf_transition table to set a to-be-created stack_wf_process_uu field. This is not normalized; however, it is extremely convenient. Consider added this same type of trigger on other process oriented tables that current do not have a request_uu or process_uu
 
+-- Function to list last x notes
+CREATE OR REPLACE FUNCTION stack_wf_request_get_notes(
+    p_request_uu uuid,
+    p_note_count integer
+)
+--todo: finish - currently partially implemented
+RETURNS text[] AS $$
+DECLARE
+    v_notes text[];
+BEGIN
+    select array_agg(concat_ws(' by: ', note, name)) into v_notes
+    from (
+        select n.note, concat_ws(' ', u.first_name, u.last_name) as name
+        from stack_wf_request_note n
+        join stack_user u on n.stack_user_uu = n.stack_user_uu
+        where n.stack_wf_request_uu = p_request_uu
+        order by n.created desc
+        limit p_note_count
+    ) t;
+    return v_notes;
+    
+END;
+$$ LANGUAGE plpgsql;
+COMMENT ON FUNCTION stack_wf_request_get_notes(uuid,integer) is '';
 
 -- Function to create stack_wf_process supporting records from an existing stack_wf_process
 CREATE OR REPLACE FUNCTION stack_wf_process_create_from_to_process(

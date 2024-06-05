@@ -23,6 +23,7 @@
 
 CREATE TABLE stack_user (
   stack_user_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created TIMESTAMP NOT NULL DEFAULT now(),
   search_key VARCHAR(255) NOT NULL,
   last_name VARCHAR(255) NOT NULL,
   first_name VARCHAR(255) NOT NULL,
@@ -38,6 +39,7 @@ VALUES
 
 CREATE TABLE stack_wf_process_type (
   stack_wf_process_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created TIMESTAMP NOT NULL DEFAULT now(),
   search_key VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
   description TEXT,
@@ -55,6 +57,7 @@ VALUES
   ('b3f13a96-3f55-45cd-86ae-c530e97c4e2c', 'checklist', 'Checklist', 'Simple tracking what needs to happen and letting everyone know when stuff is done.');
 
 CREATE TABLE stack_wf_target_type (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_target_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   search_key VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
@@ -73,6 +76,7 @@ VALUES
   ('1b405fc3-90cf-41a5-9ed9-b60d35cfa44c', 'process_admin', 'Process Admins', 'The users who are administrators of the process associated with the request.');
 
 CREATE TABLE stack_wf_state_type (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_state_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   search_key VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
@@ -94,6 +98,7 @@ VALUES
   ('c8046298-cdf0-4df2-be08-d8c5c5122bd7', 'finalized', 'Finalized', 'A state signifying that any Request has reached its final state and cannot be further changed.', false);
 
 CREATE TABLE stack_wf_resolution_type (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_resolution_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   search_key VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
@@ -115,6 +120,7 @@ VALUES
   ('7b544603-3364-486d-8e38-fba4f18a065e', 'cancelled', 'Cancelled', 'A resolution indicating the request has been cancelled.', false);
 
 CREATE TABLE stack_wf_activity_type (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_activity_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   search_key VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
@@ -134,6 +140,7 @@ VALUES
 
 
 CREATE TABLE stack_wf_action_type (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_action_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   search_key VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
@@ -165,6 +172,7 @@ VALUES
 
 
 CREATE TABLE stack_wf_process (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_process_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_process_type_uu UUID NOT NULL,
   search_key VARCHAR(255) NOT NULL,
@@ -177,6 +185,7 @@ CREATE TABLE stack_wf_process (
 COMMENT ON TABLE stack_wf_process IS 'Table that represents the starting point of workflow design and execution. Processes describe how to get things done and my whom. A process describes what is possible in a workflow scenario. A process acts as a hub to collect workflow data about users, requests, states, actions, and transitions. Most of the remaining workflow tables reference a process directly or indirectly.';
 
 CREATE TABLE stack_wf_group (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_group_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   search_key VARCHAR(255) NOT NULL,
   name VARCHAR(255) NOT NULL,
@@ -192,6 +201,7 @@ COMMENT ON TABLE stack_wf_group IS 'Table that represents a collection of people
   -- The expectation is that you can populate a workflow process group from one or multiple roles
 
 CREATE TABLE stack_wf_group_member_lnk (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_group_member_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_group_uu UUID NOT NULL,
   stack_user_uu UUID NOT NULL,
@@ -203,6 +213,7 @@ COMMENT ON TABLE stack_wf_group_member_lnk IS 'Table that links users to a proce
 -- todo: should members be added at the process level or the request level or both? Consider adding a stack_wf_request_uu column to identify if the link was established at the request level. If this change is made, move this table definition below the stack_wf_request table definition.
 
 CREATE TABLE stack_wf_process_admin_lnk (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_process_admin_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_process_uu UUID NOT NULL,
   stack_user_uu UUID NOT NULL,
@@ -213,6 +224,7 @@ CREATE TABLE stack_wf_process_admin_lnk (
 COMMENT ON TABLE stack_wf_process_admin_lnk IS 'Table that links users to processes as someone who can administer a particular process. Admins can create, update and delete processes';
 
 CREATE TABLE stack_wf_target (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_target_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_target_type_uu UUID NOT NULL,
   stack_wf_process_uu UUID NOT NULL,
@@ -225,6 +237,7 @@ CREATE TABLE stack_wf_target (
 COMMENT ON TABLE stack_wf_target IS 'Table that represents the targets within a process. Note that we must first define the targets of a process before we can create a request. This is a process attribute table.';
 
 CREATE TABLE stack_wf_state (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_state_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_state_type_uu UUID NOT NULL,
   stack_wf_process_uu UUID NOT NULL,
@@ -237,6 +250,7 @@ CREATE TABLE stack_wf_state (
 COMMENT ON TABLE stack_wf_state IS 'Table that represents the states within a process. Note that we must first define the states of a process before we can create a request. This is a process attribute table.';
 
 CREATE TABLE stack_wf_resolution (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_resolution_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_resolution_type_uu UUID NOT NULL,
   stack_wf_process_uu UUID NOT NULL,
@@ -249,6 +263,7 @@ CREATE TABLE stack_wf_resolution (
 COMMENT ON TABLE stack_wf_resolution IS 'Table that represents the resolutions within a process. Note that we must first define the resolutions of a process before we can create a request. This is a process attribute table.';
 
 CREATE TABLE stack_wf_action (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_action_type_uu UUID NOT NULL,
   stack_wf_process_uu UUID NOT NULL,
@@ -261,6 +276,7 @@ CREATE TABLE stack_wf_action (
 COMMENT ON TABLE stack_wf_action IS 'Table that represents the actions that can or should be performed to change the state in a specific request. This is a request attribute table. This is a process attribute table.';
 
 CREATE TABLE stack_wf_request (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_request_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_process_uu UUID NOT NULL,
   search_key VARCHAR(255) NOT NULL,
@@ -277,6 +293,7 @@ COMMENT ON TABLE stack_wf_request IS 'Table that represents an instance of a pro
 -- todo: the user_name column does not make any sense - or is not that useful
 
 CREATE TABLE stack_wf_request_note (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_request_note_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_request_uu UUID NOT NULL,
   stack_user_uu UUID NOT NULL,
@@ -287,6 +304,7 @@ CREATE TABLE stack_wf_request_note (
 COMMENT ON TABLE stack_wf_request_note IS 'Table that stores notes associated with a specific request and user. This is a request attribute table.';
 
 CREATE TABLE stack_wf_request_data (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_request_data_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_request_uu UUID NOT NULL,
   name VARCHAR(255) NOT NULL,
@@ -296,10 +314,10 @@ CREATE TABLE stack_wf_request_data (
 COMMENT ON TABLE stack_wf_request_data IS 'Table that stores highly-variable data associated with a specific request. This is a request attribute table.';
 
 CREATE TABLE stack_wf_request_file (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_request_file_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_request_uu UUID NOT NULL,
   stack_user_uu UUID NOT NULL,
-  date_uploaded TIMESTAMP NOT NULL,
   file_name VARCHAR(255) NOT NULL,
   file_content BYTEA NOT NULL,
   mime_type VARCHAR(255) NOT NULL,
@@ -309,6 +327,7 @@ CREATE TABLE stack_wf_request_file (
 COMMENT ON TABLE stack_wf_request_file IS 'Table that stores files associated with a specific request and user. This is a request attribute table.';
 
 CREATE TABLE stack_wf_request_stakeholder_lnk (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_request_stakeholder_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_request_uu UUID NOT NULL,
   stack_user_uu UUID NOT NULL,
@@ -320,6 +339,7 @@ COMMENT ON TABLE stack_wf_request_stakeholder_lnk IS 'Table that links a user to
 -- todo: developer note: determine if this table is really needed. There is already a stack_wf_group (role) table that can be used to create a stakeholder group.
 
 CREATE TABLE stack_wf_transition (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   search_key VARCHAR(255) NOT NULL,
   stack_wf_transition_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_state_current_uu UUID NOT NULL,
@@ -333,6 +353,7 @@ CREATE TABLE stack_wf_transition (
 COMMENT ON TABLE stack_wf_transition IS 'Table that defines the transitions between states in a process. Processes represent a flow chart, and to do that we need to be able to move requests between states. A transition is a path between two states that shows how a request can travel between them. Note that setting a resolution is optional. If you include resolutions, you might need to specify the same transition multiple times (once per resolution). These records will act as options for the user and help them automatically set the resolution based on their choice. Transitions are initiated as a result of one or more actions. Transitions are unique to a process.';
 
 CREATE TABLE stack_wf_activity (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_activity_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_activity_type_uu UUID NOT NULL,
   stack_wf_process_uu UUID NOT NULL,
@@ -345,6 +366,7 @@ CREATE TABLE stack_wf_activity (
 COMMENT ON TABLE stack_wf_activity IS 'Table that represents the activities that can be performed in a specific process. Activities are things that can happen as a result of a Request entering a state or following a transition. You might notice there is no concept of a task in this design. The activity is what should be done. The stack_wf_request_action_history table represents what pending task is to be done or what task was done. This is a request attribute table.';
 
 CREATE TABLE stack_wf_state_activity_lnk (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_state_activity_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_state_uu UUID NOT NULL,
   stack_wf_activity_uu UUID NOT NULL,
@@ -356,6 +378,7 @@ COMMENT ON TABLE stack_wf_state_activity_lnk IS 'Table that links activities to 
 -- todo: consider adding an attribute to this table dictating if the state is the to_be_state (entering) or the from_state (exiting). Currently exiting a state is silent.
 
 CREATE TABLE stack_wf_transition_activity_lnk (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_transition_activity_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_activity_uu UUID NOT NULL,
   stack_wf_transition_uu UUID NOT NULL,
@@ -366,6 +389,7 @@ CREATE TABLE stack_wf_transition_activity_lnk (
 COMMENT ON TABLE stack_wf_transition_activity_lnk IS 'Table that links activities to their respective transitions in a specific process. This table allows you to specify that the system should execute a specific activity as a result of performing a specific transition.';
 
 CREATE TABLE stack_wf_action_transition_lnk (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_transition_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_action_uu UUID NOT NULL,
   stack_wf_transition_uu UUID NOT NULL,
@@ -379,6 +403,7 @@ COMMENT ON TABLE stack_wf_action_transition_lnk IS 'Table that links actions to 
 -- todo: need a test/validator to identify conflicting resolutions
 
 CREATE TABLE stack_wf_action_target_lnk (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_action_target_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_action_uu UUID NOT NULL,
   stack_wf_target_uu UUID NOT NULL,
@@ -391,6 +416,7 @@ CREATE TABLE stack_wf_action_target_lnk (
 COMMENT ON TABLE stack_wf_action_target_lnk IS 'Table that links actions to their respective targets and associated groups. This tables acts as an access list to dictate who can perform what actions. If a group is the action target, then any member of the group can perform the action for it to be valid.';
 
 CREATE TABLE stack_wf_activity_target_lnk (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_activity_target_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_activity_uu UUID NOT NULL,
   stack_wf_target_uu UUID NOT NULL,
@@ -403,6 +429,7 @@ CREATE TABLE stack_wf_activity_target_lnk (
 COMMENT ON TABLE stack_wf_activity_target_lnk IS 'Table that links activities to their respective targets in the workflow process. This tables dictates who receives what activities. If a group is an activity target, then all members of the group receive the activity (e.g. everyone in the group gets an email).';
 
 CREATE TABLE stack_wf_request_activity_history (
+  created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_request_activity_history_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_request_uu UUID NOT NULL,
   stack_wf_activity_uu UUID NOT NULL,
