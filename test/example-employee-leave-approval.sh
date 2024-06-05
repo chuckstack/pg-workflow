@@ -31,3 +31,31 @@ echo
 v_request_uu=$(psql $psql_test $TEST_PSQL_VAR_ONLY -c " select stack_wf_request_create_from_process('$v_process_uu', '$v_user_uu') ")
 echo "v_request_uu: $v_request_uu"
 echo
+
+# Add some request data
+psql $psql_test -c \
+"
+INSERT INTO stack_wf_request_data (stack_wf_request_uu, name, value)
+VALUES
+    ('$v_request_uu', 'leave_type', 'Vacation'),
+    ('$v_request_uu', 'start_date', '2023-07-01'),
+    ('$v_request_uu', 'end_date', '2023-07-05'),
+    ('$v_request_uu', 'reason', 'Taking a family vacation')
+"
+
+psql $psql_test -c \
+"
+INSERT INTO stack_wf_request_note (stack_wf_request_uu, stack_user_uu, note)
+VALUES ('$v_request_uu', '$v_user_uu', 'Submitting leave request for approval');
+"
+
+# todo:
+## function to show request summary
+##   current state,
+##   current resolution,
+##   open activities,
+##   next actions available
+## function to do action
+##   set state
+##   create activity history
+## function

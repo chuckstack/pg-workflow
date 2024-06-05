@@ -64,6 +64,10 @@ BEGIN
         stack_wf_resolution_uu uuid,
 		uu uuid not null default gen_random_uuid()
     );
+    
+    --------------------------------
+    -- Insert the temp table data
+    --------------------------------
 
     -- The kv table is where you (the user who might be modifying this function) define your custom states, actions, resolution and targets you want in your newly created process.
 	-- insert entities into the temporary table - one value of this step is that it creates uuids for future use
@@ -89,6 +93,37 @@ BEGIN
         ('stack_wf_target',     'process_admin',        'Process Admins', 'The users who are administrators of the process associated with the request.',null)
     ;
 
+	-- insert transitions into the temporary table - one value of this step is that it creates uuids for future use
+    INSERT INTO kv_transition (search_key, stack_wf_state_from_uu, stack_wf_state_to_uu, stack_wf_resolution_uu) values
+        ('started-submitted', pg_temp.kvuu('started','stack_wf_state'),  pg_temp.kvuu('submitted','stack_wf_state'),null),
+        ('submitted-replied', pg_temp.kvuu('submitted','stack_wf_state'),pg_temp.kvuu('replied','stack_wf_state'),  null),
+        ('submitted-started', pg_temp.kvuu('submitted','stack_wf_state'),pg_temp.kvuu('started','stack_wf_state'),  null),
+        ('replied-finalized', pg_temp.kvuu('replied','stack_wf_state'),  pg_temp.kvuu('finalized','stack_wf_state'),null)
+	;
+    
+	-- insert action-transitions into the temporary table - one value of this step is that it creates uuids for future use
+    INSERT INTO kv_action_transition (stack_wf_action_uu, stack_wf_transition_uu, stack_wf_resolution_uu) values
+        (pg_temp.kvuu('submit','stack_wf_action'),  pg_temp.kvtuu('started-submitted'),pg_temp.kvuu('pending','stack_wf_resolution')),
+        (pg_temp.kvuu('approve','stack_wf_action'),pg_temp.kvtuu('submitted-replied'),  pg_temp.kvuu('approved','stack_wf_resolution')),
+        (pg_temp.kvuu('more-info','stack_wf_action'),pg_temp.kvtuu('submitted-started'),  pg_temp.kvuu('pending','stack_wf_resolution')),
+        (pg_temp.kvuu('deny','stack_wf_action'),pg_temp.kvtuu('submitted-replied'),  pg_temp.kvuu('denied','stack_wf_resolution')),
+        (pg_temp.kvuu('close','stack_wf_action'),  pg_temp.kvtuu('replied-finalized'),null)
+	;
+    
+    --------------------------------
+    -- Update variables and perform post processing if needed
+    --------------------------------
+    ----DEBUG
+    --SELECT count(*) FROM kv INTO v_return_count;
+    --RAISE NOTICE 'Inserted % records into kv', v_return_count;
+    
+    -- load process_uu into variable for convenience
+    SELECT uu INTO v_process_uu
+    FROM kv
+    WHERE table_name = 'stack_wf_process'
+    ;
+
+    -- update kv table accordingly
     -- udpate proces name with template text if needed
     IF p_is_template THEN
         UPDATE kv
@@ -113,32 +148,6 @@ BEGIN
         ;
     END IF;
 
-    ----DEBUG
-    --SELECT count(*) FROM kv INTO v_return_count;
-    --RAISE NOTICE 'Inserted % records into kv', v_return_count;
-    
-    -- load process_uu into variable for convenience
-    SELECT uu INTO v_process_uu
-    FROM kv
-    WHERE table_name = 'stack_wf_process'
-    ;
-
-	-- insert transitions into the temporary table - one value of this step is that it creates uuids for future use
-    INSERT INTO kv_transition (search_key, stack_wf_state_from_uu, stack_wf_state_to_uu, stack_wf_resolution_uu) values
-        ('started-submitted', pg_temp.kvuu('started','stack_wf_state'),  pg_temp.kvuu('submitted','stack_wf_state'),null),
-        ('submitted-replied', pg_temp.kvuu('submitted','stack_wf_state'),pg_temp.kvuu('replied','stack_wf_state'),  null),
-        ('submitted-started', pg_temp.kvuu('submitted','stack_wf_state'),pg_temp.kvuu('started','stack_wf_state'),  null),
-        ('replied-finalized', pg_temp.kvuu('replied','stack_wf_state'),  pg_temp.kvuu('finalized','stack_wf_state'),null)
-	;
-    
-	-- insert action-transitions into the temporary table - one value of this step is that it creates uuids for future use
-    INSERT INTO kv_action_transition (stack_wf_action_uu, stack_wf_transition_uu, stack_wf_resolution_uu) values
-        (pg_temp.kvuu('submit','stack_wf_action'),  pg_temp.kvtuu('started-submitted'),pg_temp.kvuu('pending','stack_wf_resolution')),
-        (pg_temp.kvuu('approve','stack_wf_action'),pg_temp.kvtuu('submitted-replied'),  pg_temp.kvuu('approved','stack_wf_resolution')),
-        (pg_temp.kvuu('more-info','stack_wf_action'),pg_temp.kvtuu('submitted-started'),  pg_temp.kvuu('pending','stack_wf_resolution')),
-        (pg_temp.kvuu('deny','stack_wf_action'),pg_temp.kvtuu('submitted-replied'),  pg_temp.kvuu('denied','stack_wf_resolution')),
-        (pg_temp.kvuu('close','stack_wf_action'),  pg_temp.kvtuu('replied-finalized'),null)
-	;
 
     --------------------------------
     -- create the process
