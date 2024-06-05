@@ -226,4 +226,4 @@ BEGIN
     -- The temporary table will be automatically dropped when the session ends
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON function stack_wf_template_process_create_approval_traditional(boolean,text) IS 'The purpose of this function is to automate the creation of a tradtional approval workflow. The p_is_template parameter determines if the process is flagged as a template. The p_topic topic looks for the xxx placeholder in the default text and replaces it accordingly.';
+COMMENT ON function stack_wf_template_process_create_approval_traditional(boolean,text) IS 'The purpose of this function is to automate the creation of a tradtional approval workflow. The p_is_template parameter determines if the process is flagged as a template. The p_topic topic looks for the xxx placeholder in the default text and replaces it accordingly so that users can better understand the purpose of the newly created process.';

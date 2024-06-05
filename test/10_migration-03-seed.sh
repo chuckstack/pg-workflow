@@ -15,7 +15,8 @@ echo "psql_test: $psql_test"
 echo
 echo "--------create approval traditional template coming_next--------"
 echo
-psql $psql_test -c " select stack_wf_template_process_create_approval_traditional(true) as process_uu"
+v_provess_uu=$(psql $psql_test $TEST_PSQL_VAR_ONLY -c " select stack_wf_template_process_create_approval_traditional(true) as process_uu")
+echo "v_process_uu: $v_provess_uu"
 echo
 echo "--------select 'process' as coming_next--------"
 echo
