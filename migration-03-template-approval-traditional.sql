@@ -87,6 +87,7 @@ BEGIN
         ('stack_wf_resolution', 'pending', 		         null, null,null),
         ('stack_wf_resolution', 'denied', 		         null, null,null),
         ('stack_wf_group',      'managers',             'Managers', null,null),
+        ('stack_wf_activity',   'send_email',           'Notify your peers that you will be out', null,null),
         ('stack_wf_target',     'requester',            'Requester', 'The user who initiated the request.',null),
         ('stack_wf_target',     'stakeholder',          'Stakeholders', 'The users who are stakeholders of the request.',null),
         ('stack_wf_target',     'group_member',         'Group Members', 'The users who are members of the group associated with the request.',null),
@@ -214,6 +215,17 @@ BEGIN
     WHERE tt.table_name = 'stack_wf_group'
     ;
 
+    --------------------------------
+    -- create the process activities
+    --------------------------------
+    -- note: the insert statement keeps search_key from the activity_type. Stating this because below dependencies on the activity search key.
+    INSERT INTO stack_wf_activity (stack_wf_activity_uu, stack_wf_activity_type_uu, stack_wf_process_uu, search_key, name, description)
+    SELECT tt.uu, st.stack_wf_activity_type_uu, v_process_uu, st.search_key, coalesce(tt.name,st.name), coalesce(tt.description,st.description)
+    FROM kv tt
+    JOIN stack_wf_activity_type st on coalesce(tt.search_key_type, tt.search_key) = st.search_key 
+    WHERE tt.table_name = 'stack_wf_activity'
+    ;
+  
     --------------------------------
     -- create the process transitions
     --------------------------------
