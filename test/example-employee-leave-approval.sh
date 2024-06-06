@@ -67,21 +67,9 @@ psql $psql_test -c \
 SELECT stack_wf_request_get_activity_history('$v_request_uu')
 "
 
-# todo:
-## function to show last x notes (done)
-## function to show request data (done)
-## function to show next available actions (with resolutions) (done)
-## function to show activities (all and open) (done)
-## function to show request summary (postponed)
-##   current state,
-##   current resolution,
-##   request data (array)
-##   open activities,
-##   next actions available
-##   last x notes (array)
-# function to do action (next here)
-# questions and thoughts:
-# assumes get actions function was called to get available actions (actually stack_wf_request_get_actions) - should return list of eligible
-# question: does this function require a transition
-# set state
-# create activity history
+echo "select stack_wf_request_do_action(''); from above action-transition"
+echo "select stack_wf_request_get_actions('$v_request_uu'); to get next action"
+echo "select stack_wf_request_do_action(''); from above action-transition"
+echo "select stack_wf_request_get_actions('$v_request_uu'); to get next action"
+echo "repeat, repeat, repeat"
+

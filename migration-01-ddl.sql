@@ -374,7 +374,7 @@ CREATE TABLE stack_wf_state_activity_lnk (
   FOREIGN KEY (stack_wf_activity_uu) REFERENCES stack_wf_activity(stack_wf_activity_uu),
   UNIQUE (stack_wf_state_uu, stack_wf_activity_uu)
 );
-COMMENT ON TABLE stack_wf_state_activity_lnk IS 'Table that links activities to their respective states in a specific process. This table allows you to specify that the system should execute a specific activity as a result of entering a specific state.';
+COMMENT ON TABLE stack_wf_state_activity_lnk IS 'Table that links activities to states in a specific process. This table allows you to specify that the system should produce a specific activity history record as a result of entering a specific state.';
 -- todo: consider adding an attribute to this table dictating if the state is the to_be_state (entering) or the from_state (exiting). Currently exiting a state is silent.
 
 CREATE TABLE stack_wf_transition_activity_lnk (

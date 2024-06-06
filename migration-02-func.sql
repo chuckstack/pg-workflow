@@ -210,3 +210,46 @@ COMMENT ON FUNCTION stack_wf_request_create_from_process(uuid,uuid) is 'This fun
 p_process_search_key is the process.search_key value. 
 p_requester_email is the user.email who is requesting the new instance. 
 ';
+
+CREATE OR REPLACE FUNCTION stack_wf_request_do_action(
+    p_stack_wf_action_transition_lnk_uu UUID
+)
+RETURNS VOID AS $$
+DECLARE
+    v_stack_wf_request_uu UUID;
+    v_stack_wf_state_next_uu UUID;
+    v_stack_wf_resolution_uu UUID;
+    v_stack_wf_activity_uu UUID;
+    v_insert_count INTEGER;
+BEGIN
+    -- Get the request UUID, next state UUID, and resolution UUID based on the action transition link UUID
+    SELECT r.stack_wf_request_uu, tr.stack_wf_state_next_uu, COALESCE(atl.stack_wf_resolution_uu, tr.stack_wf_resolution_uu)
+    INTO v_stack_wf_request_uu, v_stack_wf_state_next_uu, v_stack_wf_resolution_uu
+    FROM stack_wf_action_transition_lnk atl
+    JOIN stack_wf_transition tr ON atl.stack_wf_transition_uu = tr.stack_wf_transition_uu  
+    JOIN stack_wf_request r ON r.stack_wf_state_uu = tr.stack_wf_state_current_uu
+    WHERE atl.stack_wf_action_transition_lnk_uu = p_stack_wf_action_transition_lnk_uu;
+    RAISE NOTICE 'v_stack_wf_request_uu: % ', v_stack_wf_request_uu;
+    RAISE NOTICE 'v_stack_wf_state_next_uu: % ', v_stack_wf_state_next_uu;
+    RAISE NOTICE 'v_stack_wf_resolution_uu: % ', v_stack_wf_resolution_uu;
+
+    -- Update the request with the new state and resolution
+    UPDATE stack_wf_request
+    SET stack_wf_state_uu = v_stack_wf_state_next_uu,
+        stack_wf_resolution_uu = coalesce(v_stack_wf_resolution_uu, stack_wf_resolution_uu)
+    WHERE stack_wf_request_uu = v_stack_wf_request_uu;
+
+    -- Create stack_wf_request_activity_history records for the linked activities
+    with row_count as (
+        INSERT INTO stack_wf_request_activity_history (stack_wf_request_uu, stack_wf_activity_uu, stack_wf_transition_uu)
+        SELECT v_stack_wf_request_uu, tal.stack_wf_activity_uu, atl.stack_wf_transition_uu
+        FROM stack_wf_action_transition_lnk atl
+        JOIN stack_wf_transition_activity_lnk tal ON atl.stack_wf_transition_uu = tal.stack_wf_transition_uu
+        WHERE atl.stack_wf_action_transition_lnk_uu = p_stack_wf_action_transition_lnk_uu
+        RETURNING 1
+    )
+    SELECT COUNT(*) FROM row_count INTO v_insert_count;
+    RAISE NOTICE 'stack_wf_request_activity_history insert count: % ', v_insert_count;
+    
+END;
+$$ LANGUAGE plpgsql;

@@ -1,0 +1,51 @@
+Here is a function to move a stack_wf_request from one stack_wf_state to the next based on the provided details:
+
+```sql
+CREATE OR REPLACE FUNCTION stack_wf_request_do_action(
+    p_stack_wf_action_transition_lnk_uu UUID
+)
+RETURNS VOID AS $$
+DECLARE
+    v_stack_wf_request_uu UUID;
+    v_stack_wf_state_next_uu UUID;
+    v_stack_wf_resolution_uu UUID;
+    v_stack_wf_activity_uu UUID;
+BEGIN
+    -- Get the request UUID, next state UUID, and resolution UUID based on the action transition link UUID
+    SELECT r.stack_wf_request_uu, tr.stack_wf_state_next_uu, COALESCE(atl.stack_wf_resolution_uu, tr.stack_wf_resolution_uu)
+    INTO v_stack_wf_request_uu, v_stack_wf_state_next_uu, v_stack_wf_resolution_uu
+    FROM stack_wf_action_transition_lnk atl
+    JOIN stack_wf_transition tr ON atl.stack_wf_transition_uu = tr.stack_wf_transition_uu  
+    JOIN stack_wf_request r ON r.stack_wf_state_uu = tr.stack_wf_state_current_uu
+    WHERE atl.stack_wf_action_transition_lnk_uu = p_stack_wf_action_transition_lnk_uu;
+
+    -- Update the request with the new state and resolution
+    UPDATE stack_wf_request
+    SET stack_wf_state_uu = v_stack_wf_state_next_uu,
+        stack_wf_resolution_uu = v_stack_wf_resolution_uu
+    WHERE stack_wf_request_uu = v_stack_wf_request_uu;
+
+    -- Create stack_wf_request_activity_history records for the linked activities
+    INSERT INTO stack_wf_request_activity_history (stack_wf_request_uu, stack_wf_activity_uu, stack_wf_transition_uu)
+    SELECT v_stack_wf_request_uu, tal.stack_wf_activity_uu, atl.stack_wf_transition_uu
+    FROM stack_wf_action_transition_lnk atl
+    JOIN stack_wf_transition_activity_lnk tal ON atl.stack_wf_transition_uu = tal.stack_wf_transition_uu
+    WHERE atl.stack_wf_action_transition_lnk_uu = p_stack_wf_action_transition_lnk_uu;
+    
+END;
+$$ LANGUAGE plpgsql;
+```
+
+This function does the following:
+
+1. It takes the `stack_wf_action_transition_lnk_uu` parameter to identify the specific action transition to perform.
+
+2. It retrieves the associated `stack_wf_request_uu`, `stack_wf_state_next_uu`, and `stack_wf_resolution_uu` based on the provided `stack_wf_action_transition_lnk_uu`.
+
+3. It updates the `stack_wf_request` record, setting the `stack_wf_state_uu` to the next state and the `stack_wf_resolution_uu` to the associated resolution (if any).
+
+4. It inserts new records into the `stack_wf_request_activity_history` table for any activities linked to the transition. This creates a history of the activities performed as a result of the action transition.
+
+You can call this function by providing the `stack_wf_action_transition_lnk_uu` of the desired action transition. The function will handle updating the request state and resolution, as well as creating the necessary activity history records.
+
+Let me know if you have any further questions!

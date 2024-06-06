@@ -65,6 +65,12 @@ BEGIN
 		uu uuid not null default gen_random_uuid()
     );
     
+    CREATE TEMPORARY TABLE pg_temp.kv_state_activity(
+        stack_wf_state_uu uuid not null,
+        stack_wf_activity_uu uuid not null,
+		uu uuid not null default gen_random_uuid()
+    );
+    
     --------------------------------
     -- Insert the temp table data
     --------------------------------
@@ -109,6 +115,11 @@ BEGIN
         (pg_temp.kvuu('more-info','stack_wf_action'),pg_temp.kvtuu('submitted-started'),  pg_temp.kvuu('pending','stack_wf_resolution')),
         (pg_temp.kvuu('deny','stack_wf_action'),pg_temp.kvtuu('submitted-replied'),  pg_temp.kvuu('denied','stack_wf_resolution')),
         (pg_temp.kvuu('close','stack_wf_action'),  pg_temp.kvtuu('replied-finalized'),null)
+	;
+    
+	-- insert state-activity records - one value of this step is that it creates uuids for future use
+    INSERT INTO kv_state_activity (stack_wf_state_uu, stack_wf_activity_uu) values
+        (pg_temp.kvuu('submitted','stack_wf_state'),pg_temp.kvuu('send_email','stack_wf_activity'))
 	;
     
     --------------------------------
@@ -240,6 +251,14 @@ BEGIN
     INSERT INTO stack_wf_action_transition_lnk (stack_wf_action_transition_lnk_uu, stack_wf_action_uu, stack_wf_transition_uu, stack_wf_resolution_uu)
     SELECT tt.uu, tt.stack_wf_action_uu, tt.stack_wf_transition_uu, tt.stack_wf_resolution_uu
     FROM kv_action_transition tt
+    ;
+  
+    --------------------------------
+    -- create the process state activity
+    --------------------------------
+    INSERT INTO stack_wf_state_activity_lnk (stack_wf_state_activity_lnk_uu, stack_wf_state_uu, stack_wf_activity_uu)
+    SELECT tt.uu, tt.stack_wf_state_uu, tt.stack_wf_activity_uu
+    FROM kv_state_activity tt
     ;
   
     RETURN v_process_uu;
