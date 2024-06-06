@@ -202,7 +202,7 @@ COMMENT ON TABLE stack_wf_group IS 'Table that represents a collection of people
 
 CREATE TABLE stack_wf_group_member_lnk (
   created TIMESTAMP NOT NULL DEFAULT now(),
-  stack_wf_group_member_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  stack_wf_group_member_lnk_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_group_uu UUID NOT NULL,
   stack_user_uu UUID NOT NULL,
   FOREIGN KEY (stack_wf_group_uu) REFERENCES stack_wf_group(stack_wf_group_uu),
@@ -214,7 +214,7 @@ COMMENT ON TABLE stack_wf_group_member_lnk IS 'Table that links users to a proce
 
 CREATE TABLE stack_wf_process_admin_lnk (
   created TIMESTAMP NOT NULL DEFAULT now(),
-  stack_wf_process_admin_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  stack_wf_process_admin_lnk_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_process_uu UUID NOT NULL,
   stack_user_uu UUID NOT NULL,
   FOREIGN KEY (stack_wf_process_uu) REFERENCES stack_wf_process(stack_wf_process_uu),
@@ -328,7 +328,7 @@ COMMENT ON TABLE stack_wf_request_file IS 'Table that stores files associated wi
 
 CREATE TABLE stack_wf_request_stakeholder_lnk (
   created TIMESTAMP NOT NULL DEFAULT now(),
-  stack_wf_request_stakeholder_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  stack_wf_request_stakeholder_lnk_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_request_uu UUID NOT NULL,
   stack_user_uu UUID NOT NULL,
   FOREIGN KEY (stack_wf_request_uu) REFERENCES stack_wf_request(stack_wf_request_uu),
@@ -367,7 +367,7 @@ COMMENT ON TABLE stack_wf_activity IS 'Table that represents the activities that
 
 CREATE TABLE stack_wf_state_activity_lnk (
   created TIMESTAMP NOT NULL DEFAULT now(),
-  stack_wf_state_activity_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  stack_wf_state_activity_lnk_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_state_uu UUID NOT NULL,
   stack_wf_activity_uu UUID NOT NULL,
   FOREIGN KEY (stack_wf_state_uu) REFERENCES stack_wf_state(stack_wf_state_uu),
@@ -379,7 +379,7 @@ COMMENT ON TABLE stack_wf_state_activity_lnk IS 'Table that links activities to 
 
 CREATE TABLE stack_wf_transition_activity_lnk (
   created TIMESTAMP NOT NULL DEFAULT now(),
-  stack_wf_transition_activity_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  stack_wf_transition_activity_lnk_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_activity_uu UUID NOT NULL,
   stack_wf_transition_uu UUID NOT NULL,
   FOREIGN KEY (stack_wf_activity_uu) REFERENCES stack_wf_activity(stack_wf_activity_uu),
@@ -390,7 +390,7 @@ COMMENT ON TABLE stack_wf_transition_activity_lnk IS 'Table that links activitie
 
 CREATE TABLE stack_wf_action_transition_lnk (
   created TIMESTAMP NOT NULL DEFAULT now(),
-  stack_wf_transition_action_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  stack_wf_action_transition_lnk_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_action_uu UUID NOT NULL,
   stack_wf_transition_uu UUID NOT NULL,
   stack_wf_resolution_uu UUID,
@@ -404,7 +404,7 @@ COMMENT ON TABLE stack_wf_action_transition_lnk IS 'Table that links actions to 
 
 CREATE TABLE stack_wf_action_target_lnk (
   created TIMESTAMP NOT NULL DEFAULT now(),
-  stack_wf_action_target_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  stack_wf_action_target_lnk_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_action_uu UUID NOT NULL,
   stack_wf_target_uu UUID NOT NULL,
   stack_wf_group_uu UUID, -- can be null - only accept when target => is_show_group=Y
@@ -417,7 +417,7 @@ COMMENT ON TABLE stack_wf_action_target_lnk IS 'Table that links actions to thei
 
 CREATE TABLE stack_wf_activity_target_lnk (
   created TIMESTAMP NOT NULL DEFAULT now(),
-  stack_wf_activity_target_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  stack_wf_activity_target_lnk_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_activity_uu UUID NOT NULL,
   stack_wf_target_uu UUID NOT NULL,
   stack_wf_group_uu UUID, -- can be null - only accept when target => is_show_group=Y

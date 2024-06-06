@@ -81,6 +81,7 @@ SELECT stack_wf_request_get_activity_history('$v_request_uu')
 ##   last x notes (array)
 # function to do action (next here)
 # questions and thoughts:
-# assumes get actions function was called to get available actions (actually )
+# assumes get actions function was called to get available actions (actually stack_wf_request_get_actions) - should return list of eligible
+# question: does this function require a transition
 # set state
 # create activity history

@@ -237,7 +237,7 @@ BEGIN
     --------------------------------
     -- create the process action transitions
     --------------------------------
-    INSERT INTO stack_wf_action_transition_lnk (stack_wf_transition_action_uu, stack_wf_action_uu, stack_wf_transition_uu, stack_wf_resolution_uu)
+    INSERT INTO stack_wf_action_transition_lnk (stack_wf_action_transition_lnk_uu, stack_wf_action_uu, stack_wf_transition_uu, stack_wf_resolution_uu)
     SELECT tt.uu, tt.stack_wf_action_uu, tt.stack_wf_transition_uu, tt.stack_wf_resolution_uu
     FROM kv_action_transition tt
     ;

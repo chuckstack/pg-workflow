@@ -69,9 +69,9 @@ RETURNS text[] AS $$
 DECLARE
     v_action text[];
 BEGIN
-    select array_agg(concat_ws(': ', action, resolution)) into v_action
+    select array_agg(concat_ws(': ', stack_wf_action_transition_lnk_uu, action, resolution)) into v_action
     from (
-        select act.name as action, coalesce(act_tr_res.name, tr_res.name) as resolution
+        select atr.stack_wf_action_transition_lnk_uu, act.name as action, coalesce(act_tr_res.name, tr_res.name) as resolution
         from stack_wf_request r
         join stack_wf_transition tr on r.stack_wf_state_uu = tr.stack_wf_state_current_uu
         join stack_wf_action_transition_lnk atr on tr.stack_wf_transition_uu = atr.stack_wf_transition_uu
@@ -210,28 +210,3 @@ COMMENT ON FUNCTION stack_wf_request_create_from_process(uuid,uuid) is 'This fun
 p_process_search_key is the process.search_key value. 
 p_requester_email is the user.email who is requesting the new instance. 
 ';
-
-
---todo: consider something like the following:
----- Trigger function to log request creation
---CREATE OR REPLACE FUNCTION log_request_creation()
---RETURNS TRIGGER AS $$
---BEGIN
---    -- Insert a record into the stack_wf_request_action_log table
---    INSERT INTO stack_wf_request_action_log (stack_wf_request_uu, stack_wf_action_uu, stack_wf_transition_uu, is_active, is_processed)
---    VALUES (NEW.stack_wf_request_uu, NULL, NULL, true, false);
---
---    RETURN NEW;
---END;
---$$ LANGUAGE plpgsql;
---
----- Trigger to log request creation
---CREATE TRIGGER tr_log_request_creation
---AFTER INSERT ON stack_wf_request
---FOR EACH ROW
---EXECUTE FUNCTION log_request_creation();
-
---Issues with the above:
----does not execute because of non-null constraint
----insert statement hard-codes null on important columns
----needs more thought...
