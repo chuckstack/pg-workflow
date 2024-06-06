@@ -62,10 +62,18 @@ psql $psql_test -c \
 SELECT stack_wf_request_get_actions('$v_request_uu')
 "
 
+psql $psql_test -c \
+"
+SELECT stack_wf_request_get_activity_history('$v_request_uu')
+"
+
+
+
 # todo:
-## function to show last x notes
-## function to show request data
-## function to show next available actions (with resolutions)
+## function to show last x notes (done)
+## function to show request data (done)
+## function to show next available actions (with resolutions) (done)
+## function to show activities (all and open) (next-here!!!)
 ## function to show request summary
 ##   current state,
 ##   current resolution,

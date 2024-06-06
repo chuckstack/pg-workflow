@@ -9,6 +9,58 @@
 -- list of imagined triggers --
     -- need a trigger on the stack_wf_transition table to set a to-be-created stack_wf_process_uu field. This is not normalized; however, it is extremely convenient. Consider added this same type of trigger on other process oriented tables that current do not have a request_uu or process_uu
 
+CREATE OR REPLACE FUNCTION stack_boolean_yes_no(
+    p_boolean boolean
+)
+RETURNS text AS $$
+DECLARE
+    v_return text;
+BEGIN
+    select case when p_boolean then 'Open' else 'Closed' end into v_return;
+    return v_return;
+END;
+$$ LANGUAGE plpgsql;
+COMMENT ON FUNCTION stack_boolean_yes_no(boolean) is 'Function for convenience to convert boolean into Yes/No text';
+
+CREATE OR REPLACE FUNCTION stack_boolean_open_close(
+    p_boolean boolean
+)
+RETURNS text AS $$
+DECLARE
+    v_return text;
+BEGIN
+    select case when p_boolean then 'Open' else 'Closed' end into v_return;
+    return v_return;
+END;
+$$ LANGUAGE plpgsql;
+COMMENT ON FUNCTION stack_boolean_open_close(boolean) is 'Function for convenience to convert boolean into Open/Closed text';
+
+CREATE OR REPLACE FUNCTION stack_wf_request_get_activity_history(
+    p_request_uu uuid,
+    p_only_unprocessed boolean default false
+)
+RETURNS text[] AS $$
+DECLARE
+    v_action text[];
+BEGIN
+    select array_agg(concat_ws(': ', activity, '('||is_processed||')', description   )) into v_action
+    from (
+        select a.name as activity, h.is_processed, h.description
+        from stack_wf_request_activity_history h
+        join stack_wf_activity a on h.stack_wf_activity_uu = a.stack_wf_activity_uu
+        join stack_wf_transition tr on h.stack_wf_transition_uu = tr.stack_wf_transition_uu
+        left join stack_wf_group g on h.stack_wf_group_uu = g.stack_wf_group_uu
+        left join stack_user u on h.stack_user_uu = u.stack_user_uu
+        left join stack_wf_target ta on h.stack_wf_target_uu = ta.stack_wf_target_uu
+        where case when p_only_unprocessed then not p_only_unprocessed else h.is_processed end = h.is_processed
+            and h.stack_wf_request_uu = p_request_uu
+    ) t;
+    return v_action;
+    
+END;
+$$ LANGUAGE plpgsql;
+COMMENT ON FUNCTION stack_wf_request_get_activity_history(uuid,boolean) is 'Function to list request activity history';
+
 CREATE OR REPLACE FUNCTION stack_wf_request_get_actions(
     p_request_uu uuid
     --will eventually need to know who is acking to limit actions based on link records
