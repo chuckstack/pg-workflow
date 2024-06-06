@@ -9,7 +9,6 @@
 -- list of imagined triggers --
     -- need a trigger on the stack_wf_transition table to set a to-be-created stack_wf_process_uu field. This is not normalized; however, it is extremely convenient. Consider added this same type of trigger on other process oriented tables that current do not have a request_uu or process_uu
 
--- Function to list request next actions
 CREATE OR REPLACE FUNCTION stack_wf_request_get_actions(
     p_request_uu uuid
     --will eventually need to know who is acking to limit actions based on link records
@@ -37,9 +36,9 @@ BEGIN
     
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION stack_wf_request_get_actions(uuid) is '';
+COMMENT ON FUNCTION stack_wf_request_get_actions(uuid) is 'Function to list request next actions';
 
--- Function to list request data
+
 CREATE OR REPLACE FUNCTION stack_wf_request_get_data(
     p_request_uu uuid
 )
@@ -58,9 +57,9 @@ BEGIN
     
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION stack_wf_request_get_data(uuid) is '';
+COMMENT ON FUNCTION stack_wf_request_get_data(uuid) is 'Function to list request data';
 
--- Function to list request last x notes
+
 CREATE OR REPLACE FUNCTION stack_wf_request_get_notes(
     p_request_uu uuid,
     p_note_count integer
@@ -82,9 +81,9 @@ BEGIN
     
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION stack_wf_request_get_notes(uuid,integer) is '';
+COMMENT ON FUNCTION stack_wf_request_get_notes(uuid,integer) is 'Function to list request last x notes';
 
--- Function to create stack_wf_process supporting records from an existing stack_wf_process
+
 CREATE OR REPLACE FUNCTION stack_wf_process_create_from_to_process(
     p_process_existing_uu uuid,
     p_process_name_new text,
@@ -108,10 +107,9 @@ BEGIN
     RETURN v_process_new_uu;
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION stack_wf_process_create_from_to_process(uuid,text,text) is '';
+COMMENT ON FUNCTION stack_wf_process_create_from_to_process(uuid,text,text) is 'Function to create stack_wf_process supporting records from an existing stack_wf_process';
 
 
--- Function to create a stack_wf_request
 CREATE OR REPLACE FUNCTION stack_wf_request_create_from_process(
     p_process_uu uuid,
     p_requester_uu uuid
