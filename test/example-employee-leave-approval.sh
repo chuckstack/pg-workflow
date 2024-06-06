@@ -52,6 +52,11 @@ psql $psql_test -c \
 SELECT stack_wf_request_get_notes('$v_request_uu',4)
 "
 
+psql $psql_test -c \
+"
+SELECT stack_wf_request_get_data('$v_request_uu')
+"
+
 # todo:
 ## function to show last x notes
 ## function to show request data
