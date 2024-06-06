@@ -9,6 +9,36 @@
 -- list of imagined triggers --
     -- need a trigger on the stack_wf_transition table to set a to-be-created stack_wf_process_uu field. This is not normalized; however, it is extremely convenient. Consider added this same type of trigger on other process oriented tables that current do not have a request_uu or process_uu
 
+-- Function to list request next actions
+CREATE OR REPLACE FUNCTION stack_wf_request_get_actions(
+    p_request_uu uuid
+    --will eventually need to know who is acking to limit actions based on link records
+)
+RETURNS text[] AS $$
+DECLARE
+    v_action text[];
+BEGIN
+    select array_agg(concat_ws(': ', action, resolution)) into v_action
+    from (
+        select act.name as action, coalesce(act_tr_res.name, tr_res.name) as resolution
+        from stack_wf_request r
+        join stack_wf_transition tr on r.stack_wf_state_uu = tr.stack_wf_state_current_uu
+        join stack_wf_action_transition_lnk atr on tr.stack_wf_transition_uu = atr.stack_wf_transition_uu
+        join stack_wf_action act on atr.stack_wf_action_uu = act.stack_wf_action_uu
+        left join stack_wf_resolution act_tr_res on atr.stack_wf_resolution_uu = act_tr_res.stack_wf_resolution_uu
+        left join stack_wf_resolution tr_res on tr.stack_wf_resolution_uu = tr_res.stack_wf_resolution_uu
+
+        -- from request => know current state => know possible action-transitions
+        -- from action-transitions => know possibe next states
+        where r.stack_wf_request_uu = p_request_uu
+        order by lower(act.name) asc
+    ) t;
+    return v_action;
+    
+END;
+$$ LANGUAGE plpgsql;
+COMMENT ON FUNCTION stack_wf_request_get_actions(uuid) is '';
+
 -- Function to list request data
 CREATE OR REPLACE FUNCTION stack_wf_request_get_data(
     p_request_uu uuid
