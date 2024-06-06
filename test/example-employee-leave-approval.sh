@@ -61,26 +61,26 @@ psql $psql_test -c \
 "
 SELECT stack_wf_request_get_actions('$v_request_uu')
 "
-
+# todo: as of when this comment is made, you need to manually insert activity history records
 psql $psql_test -c \
 "
 SELECT stack_wf_request_get_activity_history('$v_request_uu')
 "
 
-
-
 # todo:
 ## function to show last x notes (done)
 ## function to show request data (done)
 ## function to show next available actions (with resolutions) (done)
-## function to show activities (all and open) (next-here!!!)
-## function to show request summary
+## function to show activities (all and open) (done)
+## function to show request summary (postponed)
 ##   current state,
 ##   current resolution,
 ##   request data (array)
 ##   open activities,
 ##   next actions available
 ##   last x notes (array)
-## function to do action
-##   set state
-##   create activity history
+# function to do action (next here)
+# questions and thoughts:
+# assumes get actions function was called to get available actions (actually )
+# set state
+# create activity history

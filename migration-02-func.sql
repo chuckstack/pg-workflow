@@ -41,9 +41,9 @@ CREATE OR REPLACE FUNCTION stack_wf_request_get_activity_history(
 )
 RETURNS text[] AS $$
 DECLARE
-    v_action text[];
+    v_history text[];
 BEGIN
-    select array_agg(concat_ws(': ', activity, '('||is_processed||')', description   )) into v_action
+    select array_agg(concat_ws(': ', activity, '('||is_processed||')', description   )) into v_history
     from (
         select a.name as activity, h.is_processed, h.description
         from stack_wf_request_activity_history h
@@ -55,7 +55,7 @@ BEGIN
         where case when p_only_unprocessed then not p_only_unprocessed else h.is_processed end = h.is_processed
             and h.stack_wf_request_uu = p_request_uu
     ) t;
-    return v_action;
+    return v_history;
     
 END;
 $$ LANGUAGE plpgsql;
