@@ -1,12 +1,6 @@
-I would like your help creating a psql trigger that automates the creation of a record in the stack_wf_request_activity_history table based on a stack_wf_request.stack_wf_state_uu column
-
-
-I would like your help creating a psql function that moves a stack_wf_request from one stack_wf_state to the next. Here are some important details:
+I would like your help creating a psql trigger that automates the creation of a record in the stack_wf_request_activity_history table based on an update to the stack_wf_request table stack_wf_state_uu or stack_wf_transition_uu columns. Here are some important details:
 - I have included the database domain for your reference in file: migration-10-ddl.sql
 - I have included the functions that help automate and summarize the domain in file: migration-20-func.sql
 - I have included a function that automates the creation of a stack_wf_process for a typical approval process in file: migration-30-template-approval-traditional.sql
 - I have included a function that creates an example stack_wf_request in file: example-employee-leave-approval.sh
-- You can assume that the stack_wf_action_transition_lnk_uu is known, and it is acceptable for the to-be-created function to use the stack_wf_action_transition_lnk_uu as a parameter.
-- The to-be-created function should do the following:
-    - update the stack_wf_request => stack_wf_state_uu and stack_wf_resolution_uu columns.
-    - create a stack_wf_request_activity_history record if applicable.
+

@@ -376,7 +376,7 @@ CREATE TABLE stack_wf_state_activity_lnk (
   FOREIGN KEY (stack_wf_activity_uu) REFERENCES stack_wf_activity(stack_wf_activity_uu),
   UNIQUE (stack_wf_state_uu, stack_wf_activity_uu)
 );
-COMMENT ON TABLE stack_wf_state_activity_lnk IS 'Table that links activities to states in a specific process. This table allows you to specify that the system should produce a specific activity history record as a result of entering a specific state.';
+COMMENT ON TABLE stack_wf_state_activity_lnk IS 'Table that links activities to states in a specific process. This table allows you to specify that the system should produce a specific activity history record as a result of entering a specific state. This table is broad in its definition of when activity history records are created. Said another way, this table does not care how or why the state changed. It just knows to create an activity history record because a state was achieved.';
 -- todo: consider adding an attribute to this table dictating if the state is the to_be_state (entering) or the from_state (exiting). Currently exiting a state is silent.
 
 CREATE TABLE stack_wf_transition_activity_lnk (
@@ -388,7 +388,7 @@ CREATE TABLE stack_wf_transition_activity_lnk (
   FOREIGN KEY (stack_wf_transition_uu) REFERENCES stack_wf_transition(stack_wf_transition_uu),
   UNIQUE (stack_wf_activity_uu, stack_wf_transition_uu)
 );
-COMMENT ON TABLE stack_wf_transition_activity_lnk IS 'Table that links activities to their respective transitions in a specific process. This table allows you to specify that the system should execute a specific activity as a result of performing a specific transition.';
+COMMENT ON TABLE stack_wf_transition_activity_lnk IS 'Table that links activities to their respective transitions in a specific process. This table allows you to specify that the system should execute a specific activity history record as a result of performing a specific transition. This table is more specific than the stack_wf_state_activity_lnk because it more narrowly defines when an activity history record is created. Said another way, the records in this table take precedence over ones in the stack_wf_state_activity_lnk table.';
 
 CREATE TABLE stack_wf_action_transition_lnk (
   created TIMESTAMP NOT NULL DEFAULT now(),
@@ -435,7 +435,8 @@ CREATE TABLE stack_wf_request_activity_history (
   stack_wf_request_activity_history_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_request_uu UUID NOT NULL,
   stack_wf_activity_uu UUID NOT NULL,
-  stack_wf_transition_uu UUID NOT NULL,
+  stack_wf_transition_uu UUID,
+  stack_wf_state_uu UUID,
   stack_wf_group_uu UUID, 
   stack_user_uu UUID, 
   stack_wf_target_uu UUID,
@@ -447,6 +448,7 @@ CREATE TABLE stack_wf_request_activity_history (
   FOREIGN KEY (stack_wf_target_uu) REFERENCES stack_wf_target(stack_wf_target_uu),
   FOREIGN KEY (stack_wf_group_uu) REFERENCES stack_wf_group(stack_wf_group_uu),
   FOREIGN KEY (stack_user_uu) REFERENCES stack_user(stack_user_uu),
-  FOREIGN KEY (stack_wf_transition_uu) REFERENCES stack_wf_transition(stack_wf_transition_uu)
+  FOREIGN KEY (stack_wf_transition_uu) REFERENCES stack_wf_transition(stack_wf_transition_uu),
+  FOREIGN KEY (stack_wf_state_uu) REFERENCES stack_wf_state(stack_wf_state_uu)
 );
 COMMENT ON TABLE stack_wf_request_activity_history IS 'Table that records every activity that resulted from a transition along with the target, the user/group that resulted from the target and the records is_processed status. One can query this table to see all pending activities (is_processed = false) per request';

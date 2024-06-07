@@ -1,0 +1,65 @@
+Here's a trigger function and trigger that will automate the creation of a record in the `stack_wf_request_activity_history` table based on an update to the `stack_wf_request` table's `stack_wf_state_uu` or `stack_wf_transition_uu` columns:
+
+```sql
+-- Trigger function
+CREATE OR REPLACE FUNCTION stack_wf_request_activity_history_trigger_func()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_stack_wf_activity_uu UUID;
+    v_stack_wf_transition_uu UUID;
+BEGIN
+    -- Check if the stack_wf_state_uu or stack_wf_transition_uu column was updated
+    IF NEW.stack_wf_state_uu <> OLD.stack_wf_state_uu OR 
+       NEW.stack_wf_transition_uu <> OLD.stack_wf_transition_uu THEN
+       
+        -- Get the stack_wf_activity_uu based on the new state
+        SELECT sa.stack_wf_activity_uu INTO v_stack_wf_activity_uu
+        FROM stack_wf_state_activity_lnk sa
+        WHERE sa.stack_wf_state_uu = NEW.stack_wf_state_uu;
+
+        -- Get the stack_wf_transition_uu from the updated request
+        SELECT stack_wf_transition_uu INTO v_stack_wf_transition_uu 
+        FROM stack_wf_request
+        WHERE stack_wf_request_uu = NEW.stack_wf_request_uu;
+
+        -- Insert a new activity history record
+        INSERT INTO stack_wf_request_activity_history (
+            stack_wf_request_uu,
+            stack_wf_activity_uu,
+            stack_wf_transition_uu
+        )
+        VALUES (
+            NEW.stack_wf_request_uu,
+            v_stack_wf_activity_uu,
+            v_stack_wf_transition_uu
+        );
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger
+CREATE TRIGGER stack_wf_request_activity_history_trigger
+AFTER UPDATE ON stack_wf_request
+FOR EACH ROW
+EXECUTE FUNCTION stack_wf_request_activity_history_trigger_func();
+```
+
+Here's how it works:
+
+1. The trigger function is defined as `stack_wf_request_activity_history_trigger_func()`. It is executed after an update occurs on the `stack_wf_request` table.
+
+2. Inside the trigger function, it checks if either the `stack_wf_state_uu` or `stack_wf_transition_uu` column was updated by comparing the `NEW` and `OLD` values.
+
+3. If either column was updated, it retrieves the `stack_wf_activity_uu` based on the new state by joining the `stack_wf_state_activity_lnk` table with the `NEW.stack_wf_state_uu` value.
+
+4. It retrieves the `stack_wf_transition_uu` from the updated request using the `NEW.stack_wf_request_uu` value.
+
+5. It inserts a new record into the `stack_wf_request_activity_history` table with the `stack_wf_request_uu`, `stack_wf_activity_uu`, and `stack_wf_transition_uu` values.
+
+6. The trigger is defined as `stack_wf_request_activity_history_trigger`. It is triggered after an update on the `stack_wf_request` table and executes the `stack_wf_request_activity_history_trigger_func()` function for each row.
+
+With this trigger in place, whenever the `stack_wf_state_uu` or `stack_wf_transition_uu` column is updated in the `stack_wf_request` table, a corresponding record will be automatically created in the `stack_wf_request_activity_history` table.
+
+Let me know if you have any further questions or if there's anything else I can assist you with!

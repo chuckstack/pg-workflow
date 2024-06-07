@@ -244,3 +244,61 @@ BEGIN
 
 END;
 $$ LANGUAGE plpgsql;
+
+-- Trigger function to help create activity history records
+CREATE OR REPLACE FUNCTION stack_wf_request_activity_history_trigger_func()
+RETURNS TRIGGER AS $$
+DECLARE
+    v_stack_wf_activity_uu UUID;
+	v_is_state_changed boolean;
+	v_is_transition_changed boolean;
+BEGIN
+    -- Check if the stack_wf_state_uu or stack_wf_transition_uu column was updated
+    IF NEW.stack_wf_state_uu <> OLD.stack_wf_state_uu OR
+       NEW.stack_wf_transition_uu <> OLD.stack_wf_transition_uu 
+	THEN
+		select NEW.stack_wf_state_uu <> OLD.stack_wf_state_uu into v_is_state_changed;
+		select NEW.stack_wf_transition_uu <> OLD.stack_wf_transition_uu into v_is_transition_changed;
+
+        -- Get the stack_wf_activity_uu based on the new state
+		IF v_is_state_changed THEN
+	        SELECT sa.stack_wf_activity_uu INTO v_stack_wf_activity_uu
+    	    FROM stack_wf_state_activity_lnk sa
+        	WHERE sa.stack_wf_state_uu = NEW.stack_wf_state_uu;
+		END IF;
+ 
+        -- Get the stack_wf_activity_uu based on the new transition
+        -- Note: it is possible that both state and transition changed, if so, then the activity from transition wins
+		IF v_is_transition_changed THEN
+	        SELECT ta.stack_wf_activity_uu INTO v_stack_wf_activity_uu
+    	    FROM stack_wf_transition_activity_lnk ta
+        	WHERE ta.stack_wf_transition_uu = NEW.stack_wf_transition_uu
+				and v_is_transition_changed;
+		END IF;
+ 
+		IF v_stack_wf_activity_uu IS NOT NULL THEN
+   	     	-- Insert a new activity history record
+	        INSERT INTO stack_wf_request_activity_history (
+	            stack_wf_request_uu,
+	            stack_wf_activity_uu,
+	            stack_wf_transition_uu,
+				stack_wf_state_uu
+	        )
+	        VALUES (
+	            NEW.stack_wf_request_uu,
+	            v_stack_wf_activity_uu,
+	            CASE WHEN v_is_transition_changed THEN NEW.stack_wf_transition_uu ELSE NULL END,
+	            CASE WHEN v_is_state_changed THEN NEW.stack_wf_state_uu ELSE NULL END
+	        );
+		END IF;
+    END IF;
+
+    RETURN NEW;
+END;
+$$ LANGUAGE plpgsql;
+
+-- Trigger to call the function to help create activity history records
+CREATE TRIGGER stack_wf_request_activity_history_trigger
+AFTER UPDATE ON stack_wf_request
+FOR EACH ROW
+EXECUTE FUNCTION stack_wf_request_activity_history_trigger_func();
