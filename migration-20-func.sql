@@ -220,11 +220,12 @@ DECLARE
     v_stack_wf_state_next_uu UUID;
     v_stack_wf_resolution_uu UUID;
     v_stack_wf_activity_uu UUID;
+    v_stack_wf_transition_uu UUID;
     v_insert_count INTEGER;
 BEGIN
     -- Get the request UUID, next state UUID, and resolution UUID based on the action transition link UUID
-    SELECT r.stack_wf_request_uu, tr.stack_wf_state_next_uu, COALESCE(atl.stack_wf_resolution_uu, tr.stack_wf_resolution_uu)
-    INTO v_stack_wf_request_uu, v_stack_wf_state_next_uu, v_stack_wf_resolution_uu
+    SELECT r.stack_wf_request_uu, tr.stack_wf_state_next_uu, COALESCE(atl.stack_wf_resolution_uu, tr.stack_wf_resolution_uu), atl.stack_wf_transition_uu
+    INTO v_stack_wf_request_uu, v_stack_wf_state_next_uu, v_stack_wf_resolution_uu, v_stack_wf_transition_uu
     FROM stack_wf_action_transition_lnk atl
     JOIN stack_wf_transition tr ON atl.stack_wf_transition_uu = tr.stack_wf_transition_uu  
     JOIN stack_wf_request r ON r.stack_wf_state_uu = tr.stack_wf_state_current_uu
@@ -232,11 +233,13 @@ BEGIN
     RAISE NOTICE 'v_stack_wf_request_uu: % ', v_stack_wf_request_uu;
     RAISE NOTICE 'v_stack_wf_state_next_uu: % ', v_stack_wf_state_next_uu;
     RAISE NOTICE 'v_stack_wf_resolution_uu: % ', v_stack_wf_resolution_uu;
+    RAISE NOTICE 'v_stack_wf_transition_uu: % ', v_stack_wf_transition_uu;
 
     -- Update the request with the new state and resolution
     UPDATE stack_wf_request
     SET stack_wf_state_uu = v_stack_wf_state_next_uu,
-        stack_wf_resolution_uu = coalesce(v_stack_wf_resolution_uu, stack_wf_resolution_uu)
+        stack_wf_resolution_uu = coalesce(v_stack_wf_resolution_uu, stack_wf_resolution_uu),
+        stack_wf_transition_uu = coalesce(v_stack_wf_transition_uu, stack_wf_transition_uu)
     WHERE stack_wf_request_uu = v_stack_wf_request_uu;
 
 END;
