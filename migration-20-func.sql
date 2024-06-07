@@ -239,17 +239,5 @@ BEGIN
         stack_wf_resolution_uu = coalesce(v_stack_wf_resolution_uu, stack_wf_resolution_uu)
     WHERE stack_wf_request_uu = v_stack_wf_request_uu;
 
-    -- Create stack_wf_request_activity_history records for the linked activities
-    with row_count as (
-        INSERT INTO stack_wf_request_activity_history (stack_wf_request_uu, stack_wf_activity_uu, stack_wf_transition_uu)
-        SELECT v_stack_wf_request_uu, tal.stack_wf_activity_uu, atl.stack_wf_transition_uu
-        FROM stack_wf_action_transition_lnk atl
-        JOIN stack_wf_transition_activity_lnk tal ON atl.stack_wf_transition_uu = tal.stack_wf_transition_uu
-        WHERE atl.stack_wf_action_transition_lnk_uu = p_stack_wf_action_transition_lnk_uu
-        RETURNING 1
-    )
-    SELECT COUNT(*) FROM row_count INTO v_insert_count;
-    RAISE NOTICE 'stack_wf_request_activity_history insert count: % ', v_insert_count;
-    
 END;
 $$ LANGUAGE plpgsql;

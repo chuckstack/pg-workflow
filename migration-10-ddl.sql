@@ -275,6 +275,20 @@ CREATE TABLE stack_wf_action (
 );
 COMMENT ON TABLE stack_wf_action IS 'Table that represents the actions that can or should be performed to change the state in a specific request. This is a request attribute table. This is a process attribute table.';
 
+CREATE TABLE stack_wf_transition (
+  created TIMESTAMP NOT NULL DEFAULT now(),
+  search_key VARCHAR(255) NOT NULL,
+  stack_wf_transition_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  stack_wf_state_current_uu UUID NOT NULL,
+  stack_wf_state_next_uu UUID NOT NULL,
+  stack_wf_resolution_uu UUID,
+  FOREIGN KEY (stack_wf_state_current_uu) REFERENCES stack_wf_state(stack_wf_state_uu),
+  FOREIGN KEY (stack_wf_state_next_uu) REFERENCES stack_wf_state(stack_wf_state_uu),
+  FOREIGN KEY (stack_wf_resolution_uu) REFERENCES stack_wf_resolution(stack_wf_resolution_uu),
+  UNIQUE (stack_wf_state_current_uu, stack_wf_state_next_uu, stack_wf_resolution_uu)
+);
+COMMENT ON TABLE stack_wf_transition IS 'Table that defines the transitions between states in a process. Processes represent a flow chart, and to do that we need to be able to move requests between states. A transition is a path between two states that shows how a request can travel between them. Note that setting a resolution is optional. If you include resolutions, you might need to specify the same transition multiple times (once per resolution). These records will act as options for the user and help them automatically set the resolution based on their choice. Transitions are initiated as a result of one or more actions. Transitions are unique to a process.';
+
 CREATE TABLE stack_wf_request (
   created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_request_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -282,11 +296,13 @@ CREATE TABLE stack_wf_request (
   search_key VARCHAR(255) NOT NULL,
   date_requested TIMESTAMP NOT NULL,
   stack_user_uu UUID NOT NULL,
-  stack_wf_state_uu UUID NOT NULL,
+  stack_wf_state_uu UUID NOT NULL, --represents the current state
+  stack_wf_transition_uu UUID, --represents the last transition that occurred
   stack_wf_resolution_uu UUID NOT NULL,
   FOREIGN KEY (stack_wf_process_uu) REFERENCES stack_wf_process(stack_wf_process_uu),
   FOREIGN KEY (stack_user_uu) REFERENCES stack_user(stack_user_uu),
   FOREIGN KEY (stack_wf_state_uu) REFERENCES stack_wf_state(stack_wf_state_uu),
+  FOREIGN KEY (stack_wf_transition_uu) REFERENCES stack_wf_transition(stack_wf_transition_uu),
   FOREIGN KEY (stack_wf_resolution_uu) REFERENCES stack_wf_resolution(stack_wf_resolution_uu)
 );
 COMMENT ON TABLE stack_wf_request IS 'Table that represents an instance of a process. A request is defined by its process. A request (and its "request attribute tables") describe all that occured to achieve the current state of an active request and that occured in a completed request. Note that the request maintains its current state as a column in the stack_wf_request table. All other request attributes are maintains in "request attribute tables".';
@@ -337,20 +353,6 @@ CREATE TABLE stack_wf_request_stakeholder_lnk (
 );
 COMMENT ON TABLE stack_wf_request_stakeholder_lnk IS 'Table that links a user to a request thereby promoting the user to the role of stakeholder. A stakeholder is someone with a shared interest in a request life-cycle or resolution.  It is common for a stakeholder to request notifications when something about a request changes. This is a request attribute table.';
 -- todo: developer note: determine if this table is really needed. There is already a stack_wf_group (role) table that can be used to create a stakeholder group.
-
-CREATE TABLE stack_wf_transition (
-  created TIMESTAMP NOT NULL DEFAULT now(),
-  search_key VARCHAR(255) NOT NULL,
-  stack_wf_transition_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  stack_wf_state_current_uu UUID NOT NULL,
-  stack_wf_state_next_uu UUID NOT NULL,
-  stack_wf_resolution_uu UUID,
-  FOREIGN KEY (stack_wf_state_current_uu) REFERENCES stack_wf_state(stack_wf_state_uu),
-  FOREIGN KEY (stack_wf_state_next_uu) REFERENCES stack_wf_state(stack_wf_state_uu),
-  FOREIGN KEY (stack_wf_resolution_uu) REFERENCES stack_wf_resolution(stack_wf_resolution_uu),
-  UNIQUE (stack_wf_state_current_uu, stack_wf_state_next_uu, stack_wf_resolution_uu)
-);
-COMMENT ON TABLE stack_wf_transition IS 'Table that defines the transitions between states in a process. Processes represent a flow chart, and to do that we need to be able to move requests between states. A transition is a path between two states that shows how a request can travel between them. Note that setting a resolution is optional. If you include resolutions, you might need to specify the same transition multiple times (once per resolution). These records will act as options for the user and help them automatically set the resolution based on their choice. Transitions are initiated as a result of one or more actions. Transitions are unique to a process.';
 
 CREATE TABLE stack_wf_activity (
   created TIMESTAMP NOT NULL DEFAULT now(),
