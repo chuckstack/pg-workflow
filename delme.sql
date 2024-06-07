@@ -254,7 +254,6 @@ RETURNS TRIGGER AS $$
 DECLARE
     v_stack_wf_activity_from_state_uu UUID;
     v_stack_wf_activity_from_transition_uu UUID;
-    v_stack_wf_activity_uu UUID;
 	v_is_state_changed boolean;
 	v_is_transition_changed boolean;
 BEGIN
@@ -280,8 +279,6 @@ BEGIN
         	WHERE ta.stack_wf_transition_uu = NEW.stack_wf_transition_uu
 				and v_is_transition_changed;
 		END IF;
-        
-        select coalesce(v_stack_wf_activity_from_transition_uu, v_stack_wf_activity_from_state_uu) into v_stack_wf_activity_uu;
  
 		IF v_stack_wf_activity_uu IS NOT NULL THEN
    	     	-- Insert a new activity history record
@@ -293,7 +290,7 @@ BEGIN
 	        )
 	        VALUES (
 	            NEW.stack_wf_request_uu,
-	            v_stack_wf_activity_uu,
+	            coalesce(v_stack_wf_activity_from_transition_uu, v_stack_wf_activity_from_state_uu),
 	            CASE WHEN v_is_transition_changed THEN NEW.stack_wf_transition_uu ELSE NULL END,
 	            CASE WHEN v_is_state_changed THEN NEW.stack_wf_state_uu ELSE NULL END
 	        );
