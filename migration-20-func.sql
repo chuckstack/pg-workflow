@@ -149,7 +149,7 @@ BEGIN
     
     -- todo: steps:
         -- params: process_from_uu, process_to_uu, search_key_new, name_new, description_new
-        -- create pg_temp.kv (similar to migration-03) (uu, table_name, previous_uu)
+        -- create pg_temp.kv (similar to migration-30) (uu, table_name, previous_uu)
         -- iterate across all tables to create new records (process, state, action, etc...) to populate kv
         -- iterate across kv records to insert into new tables
 

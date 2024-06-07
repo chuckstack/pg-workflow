@@ -15,21 +15,21 @@ echo '-------begin 01-create-test-artifacts.sh-------'
 ./01-create-test-artifacts.sh
 echo '-------end 01-create-test-artifacts.sh-------'
 
-echo '-------begin migration-01-------'
+echo '-------begin migration-10-------'
 echo "psql_test: $psql_test"
-psql $psql_test -f ../migration-01-ddl.sql
-echo '-------end migration-01-------'
+psql $psql_test -f ../migration-10-ddl.sql
+echo '-------end migration-10-------'
 
-echo '-------begin migration-02-------'
+echo '-------begin migration-20-------'
 echo "psql_test: $psql_test"
-psql $psql_test -f ../migration-02-func.sql
-echo '-------end migration-02-------'
+psql $psql_test -f ../migration-20-func.sql
+echo '-------end migration-20-------'
 
-echo '-------begin migration-03-------'
+echo '-------begin migration-30-------'
 echo "psql_test: $psql_test"
-psql $psql_test -f ../migration-03-template-approval-traditional.sql
-echo '-------end migration-03-------'
+psql $psql_test -f ../migration-30-template-approval-traditional.sql
+echo '-------end migration-30-------'
 
-echo '-------begin 10_migration-03-seed.sh-------'
-./10_migration-03-seed.sh
-echo '-------end 10_migration-03-seed.sh-------'
+echo '-------begin 10_migration-30-seed.sh-------'
+./10_migration-30-seed.sh
+echo '-------end 10_migration-30-seed.sh-------'
