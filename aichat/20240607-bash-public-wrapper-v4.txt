@@ -1,0 +1,6 @@
+This script (copy-private-tables-to-view.sh) works well with one exception: the following line in the script is failing to substitute the table_name with the view_name.
+
+Here is the problem line:
+echo "$line" | sed "s/stack_\(wf_\)\?$table_name/$view_name/" >> "$output_file"
+
+I would like to take a different approach if possible. Rather than attempt to substitute values, can we extract the comment in quotes, and simply rebuild the line based on the view_name?
