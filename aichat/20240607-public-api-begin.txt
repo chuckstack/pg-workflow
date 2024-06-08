@@ -1,0 +1,16 @@
+I want your help to start developing a public api. Here are the details:
+- I have included the database domain for your reference in file: migration-10-ddl.sql
+- I have included the functions that help automate and summarize the domain in file: migration-20-func.sql
+- The artifacts in both migration-10-ddl.sql and migration-20-func.sql are intended to be in a private schema. Let's call is wf_private.
+- I want to make these resources available to both sql developers as well as postgrest.
+- I want to do so in a way where I can make controlled chanages. Said another way, I want the ability of semantic versioning.
+- It seems like creating a public facing schema is the best way to accomplish this goal. Let's call the public schema wf_public.
+- Doing so will allow me to make changes in the wf_private schema without breaking others code writen against a published version.
+- As we make changes, I believe the best way to version the changes is using the public schema's name.
+- For example, let's call version 0.1.0 wf_public_0_1_0.
+- The benefit to both postgrest is that changing from one version to another is as easy as changing the referenced schema.
+
+Do you agree with my logic? I am very much open to feedback.
+
+If you agree, will you kindly create a draft of a sql script that will accomplish the goal of producing a public api?
+

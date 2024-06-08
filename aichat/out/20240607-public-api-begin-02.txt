@@ -1,0 +1,133 @@
+Here is a draft SQL script to create a public API based on your requirements and the provided artifacts:
+
+```sql
+-- Create the public schema
+CREATE SCHEMA wf_public_0_1_0;
+
+-- Create views in the public schema for each table in the private schema
+CREATE VIEW wf_public_0_1_0.stack_user AS
+SELECT stack_user_uu, created, search_key, last_name, first_name, email, description
+FROM wf_private.stack_user;
+
+CREATE VIEW wf_public_0_1_0.stack_wf_process_type AS 
+SELECT stack_wf_process_type_uu, created, search_key, name, description
+FROM wf_private.stack_wf_process_type;
+
+CREATE VIEW wf_public_0_1_0.stack_wf_target_type AS
+SELECT created, stack_wf_target_type_uu, search_key, name, description 
+FROM wf_private.stack_wf_target_type;
+
+CREATE VIEW wf_public_0_1_0.stack_wf_state_type AS
+SELECT created, stack_wf_state_type_uu, search_key, name, is_default, description
+FROM wf_private.stack_wf_state_type;
+
+CREATE VIEW wf_public_0_1_0.stack_wf_resolution_type AS
+SELECT created, stack_wf_resolution_type_uu, search_key, name, is_default, description
+FROM wf_private.stack_wf_resolution_type;
+
+CREATE VIEW wf_public_0_1_0.stack_wf_activity_type AS
+SELECT created, stack_wf_activity_type_uu, search_key, name, description
+FROM wf_private.stack_wf_activity_type;
+
+CREATE VIEW wf_public_0_1_0.stack_wf_action_type AS
+SELECT created, stack_wf_action_type_uu, search_key, name, description
+FROM wf_private.stack_wf_action_type;
+
+CREATE VIEW wf_public_0_1_0.stack_wf_process AS
+SELECT created, stack_wf_process_uu, stack_wf_process_type_uu, search_key, name, 
+       is_template, is_processed, description
+FROM wf_private.stack_wf_process;
+
+CREATE VIEW wf_public_0_1_0.stack_wf_group AS
+SELECT created, stack_wf_group_uu, search_key, name, description, stack_wf_process_uu
+FROM wf_private.stack_wf_group;
+
+CREATE VIEW wf_public_0_1_0.stack_wf_group_member_lnk AS
+SELECT created, stack_wf_group_member_lnk_uu, stack_wf_group_uu, stack_user_uu
+FROM wf_private.stack_wf_group_member_lnk;
+
+CREATE VIEW wf_public_0_1_0.stack_wf_process_admin_lnk AS 
+SELECT created, stack_wf_process_admin_lnk_uu, stack_wf_process_uu, stack_user_uu
+FROM wf_private.stack_wf_process_admin_lnk;
+
+CREATE VIEW wf_public_0_1_0.stack_wf_target AS
+SELECT created, stack_wf_target_uu, stack_wf_target_type_uu, stack_wf_process_uu, 
+       search_key, name, description
+FROM wf_private.stack_wf_target;
+
+CREATE VIEW wf_public_0_1_0.stack_wf_state AS
+SELECT created, stack_wf_state_uu, stack_wf_state_type_uu, stack_wf_process_uu,
+       search_key, name, description 
+FROM wf_private.stack_wf_state;
+
+CREATE VIEW wf_public_0_1_0.stack_wf_resolution AS
+SELECT created, stack_wf_resolution_uu, stack_wf_resolution_type_uu, stack_wf_process_uu,
+       search_key, name, description
+FROM wf_private.stack_wf_resolution;
+
+CREATE VIEW wf_public_0_1_0.stack_wf_action AS
+SELECT created, stack_wf_action_uu, stack_wf_action_type_uu, stack_wf_process_uu,
+       search_key, name, description
+FROM wf_private.stack_wf_action;
+
+CREATE VIEW wf_public_0_1_0.stack_wf_transition AS
+SELECT created, search_key, stack_wf_transition_uu, stack_wf_state_current_uu, 
+       stack_wf_state_next_uu, stack_wf_resolution_uu
+FROM wf_private.stack_wf_transition;
+
+CREATE VIEW wf_public_0_1_0.stack_wf_request AS
+SELECT created, stack_wf_request_uu, stack_wf_process_uu, search_key, 
+       date_requested, stack_user_uu, stack_wf_state_uu, stack_wf_transition_uu,
+       stack_wf_resolution_uu
+FROM wf_private.stack_wf_request;
+
+-- Repeat for remaining tables...
+
+-- Create public versions of the functions with security definer
+CREATE FUNCTION wf_public_0_1_0.stack_boolean_yes_no(p_boolean boolean)
+RETURNS text AS
+$BODY$
+BEGIN
+  RETURN wf_private.stack_boolean_yes_no(p_boolean);
+END;
+$BODY$
+LANGUAGE plpgsql
+SECURITY DEFINER;
+
+CREATE FUNCTION wf_public_0_1_0.stack_boolean_open_close(p_boolean boolean)
+RETURNS text AS 
+$BODY$
+BEGIN
+  RETURN wf_private.stack_boolean_open_close(p_boolean);
+END;
+$BODY$
+LANGUAGE plpgsql
+SECURITY DEFINER;
+
+-- Repeat for remaining functions...
+
+-- Grant access to the public schema to the appropriate roles
+GRANT USAGE ON SCHEMA wf_public_0_1_0 TO user_role;
+
+-- Grant SELECT on the views to the appropriate roles  
+GRANT SELECT ON ALL TABLES IN SCHEMA wf_public_0_1_0 TO user_role;
+
+-- Grant EXECUTE on the functions to the appropriate roles
+GRANT EXECUTE ON FUNCTION wf_public_0_1_0.stack_boolean_yes_no(boolean) TO user_role;
+GRANT EXECUTE ON FUNCTION wf_public_0_1_0.stack_boolean_open_close(boolean) TO user_role;
+-- Repeat for remaining functions...
+```
+
+Key points:
+
+1. A new schema `wf_public_0_1_0` is created to contain the public API for version 0.1.0.
+
+2. Views are created in the public schema selecting from the tables in the private `wf_private` schema. This exposes the data in a controlled way.
+
+3. Public versions of the functions are created that simply call the private functions. The `SECURITY DEFINER` clause allows them to execute with the permissions of the definer.
+
+4. Access is granted to the appropriate roles, in this case `user_role`, to the schema, views and functions.
+
+5. To create a new version, you would create a new schema like `wf_public_0_2_0` and repeat the process, adjusting the views and functions as needed.
+
+Let me know if you have any other questions!

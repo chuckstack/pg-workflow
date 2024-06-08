@@ -4,3 +4,4 @@ I would like your help creating a psql trigger that automates the creation of a 
 - I have included a function that automates the creation of a stack_wf_process for a typical approval process in file: migration-30-template-approval-traditional.sql
 - I have included a function that creates an example stack_wf_request in file: example-employee-leave-approval.sh
 
+aichat -f aichat/20240607-trigger-activity-history.txt -f migration-10-ddl.sql -f migration-20-func.sql -f migration-30-template-approval-traditional.sql -f test/example-employee-leave-approval.sh > aichat/out/20240607-trigger-activity-history.txt-01.txt

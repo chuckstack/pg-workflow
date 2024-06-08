@@ -17,17 +17,17 @@ echo '-------end 01-create-test-artifacts.sh-------'
 
 echo '-------begin migration-10-------'
 echo "psql_test: $psql_test"
-psql $psql_test -f ../migration-10-ddl.sql
+psql $psql_test -f ../private/migration-10-ddl.sql
 echo '-------end migration-10-------'
 
 echo '-------begin migration-20-------'
 echo "psql_test: $psql_test"
-psql $psql_test -f ../migration-20-func.sql
+psql $psql_test -f ../private/migration-20-func.sql
 echo '-------end migration-20-------'
 
 echo '-------begin migration-30-------'
 echo "psql_test: $psql_test"
-psql $psql_test -f ../migration-30-template-approval-traditional.sql
+psql $psql_test -f ../private/migration-30-template-approval-traditional.sql
 echo '-------end migration-30-------'
 
 echo '-------begin 10_migration-30-seed.sh-------'
