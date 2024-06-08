@@ -1,0 +1,26 @@
+I would like your improving the bash script named copy-private-tables-to-view.sh. It converts a file with sql create table statements into a file with create view statements. I would like your help to improve it in the following ways:
+- Needs to change "COMMENT ON TABLE" to "COMMENT ON VIEW"
+- Need to add a prefix to the view. Example: api_
+- The script needs to know the directory it is run from. When it saves the newly created file, it needs to save the file to the current directory of the script (not the directory of the file passed in).
+
+Here is what it currently produces:
+
+```sql
+CREATE VIEW process_type AS SELECT * FROM stack_wf_process_type;
+COMMENT ON TABLE process_type IS 'some comment';
+
+CREATE VIEW target_type AS SELECT * FROM stack_wf_target_type;
+COMMENT ON TABLE target_type IS 'some comment';
+```
+
+Here is would I would like it to produce:
+
+```sql
+CREATE VIEW api_process_type AS SELECT * FROM stack_wf_process_type;
+COMMENT ON VIEW api_process_type IS 'some comment';
+
+CREATE VIEW api_target_type AS SELECT * FROM stack_wf_target_type;
+COMMENT ON VIEW api_target_type IS 'some comment';
+```
+
+Please produce a new version for me with these improvements. Please update the comments as well if needed.
