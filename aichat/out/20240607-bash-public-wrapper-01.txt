@@ -1,0 +1,66 @@
+To create a bash script that converts a file with SQL CREATE TABLE statements into a file with CREATE VIEW statements, you can use the following script:
+
+```bash
+#!/bin/bash
+
+# Check if the input file is provided
+if [ $# -eq 0 ]; then
+  echo "Please provide the input file as an argument."
+  exit 1
+fi
+
+# Get the input file name
+input_file=$1
+
+# Create the output file name by appending "_views" to the input file name
+output_file="${input_file%.*}_views.sql"
+
+# Loop through each line of the input file
+while IFS= read -r line; do
+  # Check if the line starts with "CREATE TABLE"
+  if [[ $line =~ ^CREATE\ TABLE ]]; then
+    # Extract the table name
+    table_name=$(echo "$line" | awk '{print $3}' | tr -d '(')
+    
+    # Remove the "stack_" or "stack_wf_" prefix from the table name
+    view_name=$(echo "$table_name" | sed -e 's/^stack_//' -e 's/^stack_wf_//')
+    
+    # Write the CREATE VIEW statement to the output file
+    echo "CREATE VIEW $view_name AS" >> "$output_file"
+    echo "SELECT * FROM $table_name;" >> "$output_file"
+    echo "" >> "$output_file"
+  fi
+done < "$input_file"
+
+echo "Views created successfully in $output_file"
+```
+
+Here's how the script works:
+
+1. It checks if an input file is provided as an argument. If not, it displays an error message and exits.
+
+2. It assigns the input file name to the `input_file` variable.
+
+3. It creates the output file name by appending "_views" to the input file name. For example, if the input file is "tables.sql", the output file will be "tables_views.sql".
+
+4. It starts a loop that reads each line of the input file.
+
+5. For each line, it checks if the line starts with "CREATE TABLE".
+
+6. If the line starts with "CREATE TABLE", it extracts the table name using `awk` and removes the trailing opening parenthesis.
+
+7. It removes the "stack_" or "stack_wf_" prefix from the table name using `sed` and assigns the result to the `view_name` variable.
+
+8. It writes the CREATE VIEW statement to the output file using the `view_name` and the original `table_name`.
+
+9. It adds an empty line after each view definition for readability.
+
+10. After processing all lines, it displays a success message indicating the output file name.
+
+To use this script, save it to a file (e.g., `create_views.sh`), make it executable (`chmod +x create_views.sh`), and run it with the input file as an argument:
+
+```bash
+./create_views.sh input.sql
+```
+
+This will create a new file named "input_views.sql" with the generated CREATE VIEW statements based on the CREATE TABLE statements in the input file.

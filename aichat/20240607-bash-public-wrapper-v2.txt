@@ -1,0 +1,24 @@
+I would like your improving the bash script named copy-private-tables-to-view.sh. It convert a file with sql create table statements into a file with create view statements. I would like your help to improve it in the following ways:
+- I need an empty line after each comment.
+- In the from clause, I need it to refor to the original table's name.
+
+Here is what it currently produces:
+
+```sql
+CREATE VIEW process_type AS SELECT * FROM process_type;
+COMMENT ON TABLE process_type IS 'some comment';
+CREATE VIEW target_type AS SELECT * FROM target_type;
+COMMENT ON TABLE target_type IS 'some comment';
+```
+
+Here is would I would like it to produce:
+
+```sql
+CREATE VIEW process_type AS SELECT * FROM stack_wf_process_type;
+COMMENT ON TABLE process_type IS 'some comment';
+
+CREATE VIEW target_type AS SELECT * FROM stack_wf_target_type;
+COMMENT ON TABLE target_type IS 'some comment';
+```
+
+Please produce a new version for me with these improvements. Please update the comments as well if needed.

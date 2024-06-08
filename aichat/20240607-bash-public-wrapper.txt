@@ -1,0 +1,21 @@
+I would like your help writting a bash script to convert a file with sql create table statements into a file with create view statements. Here is an example:
+
+CREATE TABLE stack_wf_process_type (
+  stack_wf_process_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created TIMESTAMP NOT NULL DEFAULT now(),
+  search_key VARCHAR(255) NOT NULL,
+  name VARCHAR(255) NOT NULL,
+  description TEXT,
+  UNIQUE (search_key)
+);
+COMMENT ON TABLE stack_wf_process_type IS 'some commment here';
+
+Here is an example of what I want to create:
+
+create view process_type as
+select * from process_type;
+COMMENT ON TABLE process_type IS 'some commment here';
+
+Notes:
+- all tables will begin with either stack_ or stack_wf_. I want to remove this prefix when creating the view.
+- I want to preserve the comment as well.
