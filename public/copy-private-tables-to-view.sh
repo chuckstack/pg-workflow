@@ -24,8 +24,10 @@ set -e
 #    - It writes the view statement to the output file.
 #
 # 5. If the line starts with "COMMENT ON TABLE":
+#    - It extracts the comment in quotes using `sed`.
 #    - It changes "COMMENT ON TABLE" to "COMMENT ON VIEW".
-#    - It extracts the table name from the comment using `awk`, removes the prefix using `sed`, and adds the "api_" prefix to the view name.
+#    - It adds the "api_" prefix to the view name.
+#    - It rebuilds the comment line using the extracted comment and the modified view name.
 #    - It writes the modified comment to the output file.
 #    - It adds an empty line after the comment in the output file.
 #
@@ -40,27 +42,18 @@ fi
 
 # load the script name and path into variables and change to the current directory
 TEST_SCRIPTNAME=$(readlink -f "$0")
-#echo "TEST_SCRIPTNAME: $TEST_SCRIPTNAME"
 TEST_SCRIPTPATH=$(dirname "$TEST_SCRIPTNAME")
-#echo "TEST_SCRIPTPATH: $TEST_SCRIPTPATH"
 TEST_SCRIPTBASENAME=$(basename "$0")
-#echo "TEST_SCRIPTBASENAME: $TEST_SCRIPTBASENAME"
 cd $TEST_SCRIPTPATH
 
 # load the input file name and path into variables
 TEST_TARGETNAME=$(readlink -f "$1")
-#echo "TEST_TARGETNAME: $TEST_TARGETNAME"
 TEST_TARGETPATH=$(dirname "$TEST_TARGETNAME")
-#echo "TEST_TARGETPATH: $TEST_TARGETPATH"
 TEST_TARGETBASENAME=$(basename "$1")
-#echo "TEST_TARGETBASENAME: $TEST_TARGETBASENAME"
 
 input_file=$1
-#echo "input_file: $input_file"
 script_dir=$TEST_SCRIPTPATH
-#echo "script_dir: $script_dir"
 output_file="$script_dir/${TEST_TARGETBASENAME%.*}_views.sql"
-#echo "output_file: $output_file"
 
 rm $output_file
 
@@ -70,9 +63,7 @@ while IFS= read -r line; do
   if [[ $line =~ ^CREATE\ TABLE ]]; then
     # Extract the table name
     table_name=$(echo "$line" | awk '{print $3}')
-    #echo "table_name: $table_name"
     view_name=$(echo "$table_name" | sed 's/stack_\(wf_\)\?/api_/')
-    #echo "view_name: $view_name"
 
     # Create the view statement
     view_statement="CREATE VIEW $view_name AS SELECT * FROM $table_name;"
@@ -80,12 +71,20 @@ while IFS= read -r line; do
     # Write the view statement to the output file
     echo "$view_statement" >> "$output_file"
   elif [[ $line =~ ^COMMENT\ ON\ TABLE ]]; then
+    # Extract the comment in quotes
+    comment=$(echo "$line" | sed -n "s/.*'\(.*\)'.*/\1/p")
+
     # Change "COMMENT ON TABLE" to "COMMENT ON VIEW"
     line=$(echo "$line" | sed 's/COMMENT ON TABLE/COMMENT ON VIEW/')
-    #echo "comment line: $line"
+
+    ## Add the "api_" prefix to the view name
+    #view_name=$(echo "$table_name" | sed 's/stack_\(wf_\)\?/api_/')
+
+    # Rebuild the comment line
+    comment_line="COMMENT ON VIEW $view_name IS '$comment';"
 
     # Write the modified comment to the output file
-    echo "$line" | sed "s/stack_\(wf_\)\?$table_name/$view_name/" >> "$output_file"
+    echo "$comment_line" >> "$output_file"
 
     # Add an empty line after the comment
     echo "" >> "$output_file"
