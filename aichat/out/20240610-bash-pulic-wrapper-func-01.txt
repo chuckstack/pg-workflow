@@ -1,0 +1,84 @@
+Here's a bash script that automates creating the public schema facade (pass-through) functions based on the existing private schema functions:
+
+```bash
+#!/bin/bash
+
+# Read the SQL file
+sql_file="../private/migration-20-func.sql"
+
+# Iterate over each line in the SQL file
+while IFS= read -r line; do
+  # Check if the line starts with "CREATE FUNCTION" and is not indented
+  if [[ $line =~ ^CREATE\ FUNCTION\ (stack_|stack_wf_)([a-zA-Z0-9_]+)\( ]]; then
+    # Extract the function name and replace the prefix
+    function_name="${BASH_REMATCH[2]}"
+    public_function_name="api_$function_name"
+
+    # Extract the function parameters and return type
+    params_and_return=$(echo "$line" | sed -E 's/^CREATE FUNCTION (stack_|stack_wf_)[a-zA-Z0-9_]+\(//;s/\).*$//')
+    return_type=$(echo "$line" | sed -E 's/^.*RETURNS //;s/ AS.*$//')
+
+    # Read the comment for the function
+    comment=""
+    while IFS= read -r comment_line; do
+      if [[ $comment_line =~ ^COMMENT\ ON\ FUNCTION\ (stack_|stack_wf_)[a-zA-Z0-9_]+\(.*\)\ is\ \'(.*)\'\; ]]; then
+        comment="${BASH_REMATCH[2]}"
+        break
+      fi
+    done < <(tail -n +2 <<< "$line")
+
+    # Generate the public function code
+    public_function_code=$(cat <<EOF
+CREATE FUNCTION $public_function_name($params_and_return)
+RETURNS $return_type AS
+\$BODY\$
+BEGIN
+  RETURN wf_private.stack_$function_name($params_and_return);
+END;
+\$BODY\$
+LANGUAGE plpgsql
+SECURITY DEFINER;
+COMMENT ON FUNCTION $public_function_name($params_and_return) is '$comment';
+
+EOF
+)
+
+    # Output the public function code
+    echo "$public_function_code"
+  fi
+done < "$sql_file"
+```
+
+Here's how the script works:
+
+1. It reads the SQL file specified by `sql_file`.
+
+2. It iterates over each line in the SQL file.
+
+3. For each line, it checks if the line starts with "CREATE FUNCTION" and is not indented. If so, it means it's a function definition.
+
+4. It extracts the function name using regular expressions and replaces the prefix "stack_" or "stack_wf_" with "api_".
+
+5. It extracts the function parameters and return type from the line.
+
+6. It reads the comment for the function by looking for the "COMMENT ON FUNCTION" line that follows the function definition.
+
+7. It generates the public function code using a heredoc syntax. The public function simply calls the corresponding private function with the same parameters and returns the result.
+
+8. It outputs the generated public function code.
+
+9. The script repeats steps 3-8 for each function definition found in the SQL file.
+
+To use the script:
+
+1. Save the script to a file, for example, `generate_public_functions.sh`.
+
+2. Make the script executable by running `chmod +x generate_public_functions.sh`.
+
+3. Update the `sql_file` variable in the script to point to the correct location of your `migration-20-func.sql` file.
+
+4. Run the script using `./generate_public_functions.sh`.
+
+5. The script will output the generated public function code for each function found in the SQL file. You can redirect the output to a new SQL file to create the public schema facade.
+
+Note: Make sure the script and the SQL file are in the same directory or update the path accordingly.

@@ -1,0 +1,37 @@
+I want your help to creating a public facing sql schema. Here are the details:
+- I have a private sql schema where I create tables, views and functions to help support a domain.
+- I want to create a public sql schema that acts as a facade so that others can interact with the domain and so that I can control what changes the public sees.
+- The private schema already exists. Here is a file with the functions defined: migration-20-func.sql
+- I want you to help me write a bash script that automates creating the public schema facade (pass though) functions based on the existing private schema functions.
+- Note the name prefix of the private function changes from 'stack_' or 'stack_wf_' to 'api_' for the public functions.
+- Some functions have inner functions defined that are indented; therefore, you only need to pay attention to lines that are not indented.
+- Note that we need to keep the comment on the function.
+- We need an empty line between function definitions.
+
+example 1:
+``` sql
+CREATE FUNCTION api_boolean_yes_no(p_boolean boolean)
+RETURNS text AS
+$BODY$
+BEGIN
+  RETURN wf_private.stack_boolean_yes_no(p_boolean);
+END;
+$BODY$
+LANGUAGE plpgsql
+SECURITY DEFINER;
+COMMENT ON FUNCTION api_boolean_yes_no(boolean) is 'Function for convenience to convert boolean into Yes/No text';
+```
+
+example 2:
+```
+CREATE FUNCTION api_boolean_open_close(p_boolean boolean)
+RETURNS text AS
+$BODY$
+BEGIN
+  RETURN wf_private.stack_boolean_open_close(p_boolean);
+END;
+$BODY$
+LANGUAGE plpgsql
+SECURITY DEFINER;
+COMMENT ON FUNCTION api_boolean_open_close(boolean) is 'Function for convenience to convert boolean into Open/Closed text';
+```
