@@ -63,7 +63,6 @@ COMMENT ON FUNCTION stack_wf_request_get_activity_history(uuid,boolean) is 'Func
 
 CREATE OR REPLACE FUNCTION stack_wf_request_get_actions(
     p_request_uu uuid
-    --will eventually need to know who is acking to limit actions based on link records
 )
 RETURNS text[] AS $$
 DECLARE
@@ -247,6 +246,7 @@ BEGIN
 
 END;
 $$ LANGUAGE plpgsql;
+COMMENT ON FUNCTION stack_wf_request_do_action(uuid) is 'This function performs the action linked to the supplied transition.'
 
 -- Trigger function to help create activity history records
 CREATE OR REPLACE FUNCTION stack_wf_request_activity_history_trigger_func()
@@ -303,6 +303,7 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
+COMMENT ON FUNCTION stack_wf_request_activity_history_trigger_func() is 'This trigger function automates inserting records into the request activity history table. These records resemble traditional workflow tasks.'
 
 -- Trigger to call the function to help create activity history records
 CREATE TRIGGER stack_wf_request_activity_history_trigger

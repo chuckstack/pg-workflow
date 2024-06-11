@@ -1,17 +1,20 @@
 I want your help to creating a public facing sql schema. Here are the details:
 - I have a private sql schema where I create tables, views and functions to help support a domain.
-- I want to create a public sql schema that acts as a facade so that others can interact with the domain and so that I can control what changes the public sees.
+- I want to create a public sql schema that acts as a facade so a) that others can interact with the domain and b) so that I can control what changes the public sees.
 - The private schema already exists. Here is a file with the functions defined: migration-20-func.sql
 - I want you to help me write a bash script that automates creating the public schema facade (pass though) functions based on the existing private schema functions.
-- Note the name prefix of the private function changes from 'stack_' or 'stack_wf_' to 'api_' for the public functions.
+- Note in the below examples that the name prefix of the private function changes from 'stack_' or 'stack_wf_' to 'api_' and 'api_wf_' respectively for the public functions.
 - Some functions have inner functions defined that are indented; therefore, you only need to pay attention to lines that are not indented.
+- You can ignore any function with 'trigger_func' in the name of the function.
+- You can ignore any trigger defintions.
 - Note that we need to keep the comment on the function.
 - We need an empty line between function definitions.
 - We have already written a similar script for automating tables/views. This is simply for reference so that the styles can be consistent. See: copy-private-tables-to-view.sh
-- The script should take the input file as a script parameter (like copy-private-tables-to-view.sh).
-- The script should keep the output file name similar and add a suffix like: _api
-- The script should save the output file in the same directory is the script that is executed (like copy-private-tables-to-view.sh)
-- The script should have documentation at the top (like copy-private-tables-to-view.sh)
+- The new script should take the input file as a script parameter (like copy-private-tables-to-view.sh).
+- The new script should keep the output file name similar and add a suffix like: _api.sql
+- The new script should save the output file in the same directory is the script that is executed (like copy-private-tables-to-view.sh)
+- The new script should have documentation at the top (like copy-private-tables-to-view.sh)
+- I have gone to effort to ensure the definitions of the functions are well structured to make it as easy as possible to perform this task. If functions are poorly formed or are inconsistent, please let me know.
 
 example 1:
 ``` sql

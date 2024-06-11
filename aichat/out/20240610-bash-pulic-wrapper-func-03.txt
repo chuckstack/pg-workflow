@@ -1,3 +1,7 @@
+Here's a bash script that meets your requirements:
+
+`20240610-bash-pulic-wrapper-func.txt`:
+```bash
 #!/bin/bash
 
 set -e
@@ -110,3 +114,16 @@ while IFS= read -r line; do
 done < "$input_file"
 
 echo "Public schema created successfully in $output_file"
+```
+
+To use this script, save it to a file (e.g., `create_public_schema.sh`) and make it executable using `chmod +x create_public_schema.sh`.
+
+Then, you can run the script by providing the input file as a command-line argument:
+
+```bash
+./create_public_schema.sh ../private/migration-20-func.sql
+```
+
+The script will generate a new file with the public-facing wrapper functions in the same directory as the script, with the name `migration-20-func_api.sql`.
+
+Let me know if you have any further questions or if you need any modifications to the script!
