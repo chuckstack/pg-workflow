@@ -1,3 +1,6 @@
+Here's a bash script that automates creating the public schema facade (pass-through) functions based on the existing private schema functions:
+
+```bash
 #!/bin/bash
 
 set -e
@@ -57,7 +60,7 @@ TEST_TARGETBASENAME=$(basename "$1")
 
 input_file=$1
 script_dir=$TEST_SCRIPTPATH
-output_file="$script_dir/${TEST_TARGETBASENAME%.*}_api.sql"
+output_file="$script_dir/${TEST_TARGETBASENAME%.*}_api"
 
 rm -f $output_file
 
@@ -104,3 +107,12 @@ EOF
 done < "$input_file"
 
 echo "Public functions created successfully in $output_file"
+```
+
+This script follows a similar structure to the `copy-private-tables-to-view.sh` script you provided. It reads the input file line by line, identifies the lines starting with "CREATE FUNCTION" that are not indented (to avoid inner functions), extracts the function name, and creates the public function statement by replacing the private function name with the public function name (adding the "api_" prefix) and referring to the private function in the function body.
+
+It also handles the function comments by identifying lines starting with "COMMENT ON FUNCTION", extracting the comment, adding the "api_" prefix to the function name, rebuilding the comment line, and writing it to the output file.
+
+The script takes the input file as a script parameter and saves the output file in the same directory as the script that is executed, with a suffix of "_api" added to the input file name (without the extension).
+
+Please note that this script assumes that the private functions are defined in the "wf_private" schema. Make sure to adjust the schema name if necessary.
