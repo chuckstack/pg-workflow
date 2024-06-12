@@ -1,3 +1,6 @@
+To update the `copy-private-functions.sh` script to better capture the function parameters, you can modify the part where the script extracts the function parameters and includes them in the generated public wrapper functions. Here's the updated script:
+
+```bash
 #!/bin/bash
 
 set -e
@@ -72,7 +75,7 @@ while IFS= read -r line; do
     echo "public_func_name: $public_func_name"
 
     # Extract the function parameters and return type
-    func_params=$(echo "$line" | sed -n 's/^CREATE\s\+OR\s\+REPLACE\s\+FUNCTION\s\+\S\+\s*\(.*\)\s\+RETURNS.*/\1/p')
+    func_params=$(echo "$line" | sed -n 's/^CREATE\s\+OR\s\+REPLACE\s\+FUNCTION\s\+\S\+\s*(\(.*\))\s\+RETURNS.*/\1/p')
     echo "func_params: $func_params"
     func_return=$(echo "$line" | sed -n 's/^CREATE\s\+OR\s\+REPLACE\s\+FUNCTION\s\+\S\+\s*.*RETURNS\s\+\(\S\+\).*/\1/p')
     echo "func_return: $func_return"
@@ -116,3 +119,24 @@ while IFS= read -r line; do
 done < "$input_file"
 
 echo "Public schema created successfully in $output_file"
+```
+
+The main changes made to the script are:
+
+1. The regular expression for extracting the function parameters has been updated to capture the parameters within parentheses. The updated line is:
+   ```bash
+   func_params=$(echo "$line" | sed -n 's/^CREATE\s\+OR\s\+REPLACE\s\+FUNCTION\s\+\S\+\s*(\(.*\))\s\+RETURNS.*/\1/p')
+   ```
+
+2. When generating the public wrapper function, the `$func_params` variable is now included in the function definition and the function call to the private function. The updated lines are:
+   ```bash
+   echo "CREATE FUNCTION $public_func_name($func_params)" >> "$output_file"
+   echo "  RETURN wf_private.$func_name($func_params);" >> "$output_file"
+   ```
+
+3. The function comment now includes the function parameters when generating the comment. The updated line is:
+   ```bash
+   echo "COMMENT ON FUNCTION $public_func_name($func_params) is '$func_comment';" >> "$output_file"
+   ```
+
+With these changes, the script should now properly capture and include the function parameters in the generated public wrapper functions.

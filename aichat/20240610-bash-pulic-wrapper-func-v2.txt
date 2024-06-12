@@ -1,0 +1,38 @@
+I want you help improving the script: copy-private-functions.sh
+
+It has an issue in that it was written assuming that a function was defined with the phrase: "CREATE FUNCTION"
+
+In fact, the function is most likely defined as "CREATE OR REPLACE FUNCTION". You will notice that I modified the if statment to add a wildcard between CREATE and FUNCTION.
+
+Will you kindly create a new version of the script to take these details into account?
+
+Note that I included the file to be migrated: migration-20-func.sql
+
+
+example:1 of what is expected to be created:
+``` sql
+CREATE FUNCTION api_boolean_yes_no(p_boolean boolean)
+RETURNS text AS
+$BODY$
+BEGIN
+  RETURN wf_private.stack_boolean_yes_no(p_boolean);
+END;
+$BODY$
+LANGUAGE plpgsql
+SECURITY DEFINER;
+COMMENT ON FUNCTION api_boolean_yes_no(boolean) is 'Function for convenience to convert boolean into Yes/No text';
+```
+
+example:2 of what is expected to be created:
+```
+CREATE FUNCTION api_boolean_open_close(p_boolean boolean)
+RETURNS text AS
+$BODY$
+BEGIN
+  RETURN wf_private.stack_boolean_open_close(p_boolean);
+END;
+$BODY$
+LANGUAGE plpgsql
+SECURITY DEFINER;
+COMMENT ON FUNCTION api_boolean_open_close(boolean) is 'Function for convenience to convert boolean into Open/Closed text';
+```

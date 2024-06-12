@@ -1,0 +1,36 @@
+I want you help improving the script: copy-private-functions.sh
+
+The issue is that the output of the script is missing the function parameters. I have included an example of what it is current producing: migration-20-func_api.sql
+
+Will you kindly update the script to better capture the parameters?
+
+Below are example of the desired output of the file.
+
+
+example:1 of what is expected to be created:
+```sql
+CREATE FUNCTION api_boolean_yes_no(p_boolean boolean)
+RETURNS text AS
+$BODY$
+BEGIN
+  RETURN wf_private.stack_boolean_yes_no(p_boolean);
+END;
+$BODY$
+LANGUAGE plpgsql
+SECURITY DEFINER;
+COMMENT ON FUNCTION api_boolean_yes_no(boolean) is 'Function for convenience to convert boolean into Yes/No text';
+```
+
+example:2 of what is expected to be created:
+```sql
+CREATE FUNCTION api_boolean_open_close(p_boolean boolean)
+RETURNS text AS
+$BODY$
+BEGIN
+  RETURN wf_private.stack_boolean_open_close(p_boolean);
+END;
+$BODY$
+LANGUAGE plpgsql
+SECURITY DEFINER;
+COMMENT ON FUNCTION api_boolean_open_close(boolean) is 'Function for convenience to convert boolean into Open/Closed text';
+```
