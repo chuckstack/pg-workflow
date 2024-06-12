@@ -1,0 +1,90 @@
+Here's the updated `copy-private-functions-template.sh` script with the requested changes:
+
+```bash
+#!/bin/bash
+
+set -e
+
+################################################
+# Script description:
+#
+# to be documented here...
+################################################
+
+# Check if the input file is provided
+if [ $# -eq 0 ]; then
+  echo "Usage: $0 <input_file>"
+  exit 1
+fi
+
+# Load this script name and path into variables and change to the current directory
+TEST_SCRIPTNAME=$(readlink -f "$0")
+TEST_SCRIPTPATH=$(dirname "$TEST_SCRIPTNAME")
+TEST_SCRIPTBASENAME=$(basename "$0")
+cd $TEST_SCRIPTPATH
+
+# Load the input file name and path into variables
+TEST_TARGETNAME=$(readlink -f "$1")
+TEST_TARGETPATH=$(dirname "$TEST_TARGETNAME")
+TEST_TARGETBASENAME=$(basename "$1")
+
+# describe the input and out file variables
+input_file=$1
+script_dir=$TEST_SCRIPTPATH
+output_file="$script_dir/${TEST_TARGETBASENAME%.*}_api.sql"
+
+# remove previous results
+rm -f $output_file
+
+# Process each line of the input file
+while IFS= read -r line; do
+  # Ignore indented lines and lines containing 'trigger_func' in the function name
+  if [[ $line =~ ^[[:space:]] ]] || [[ $line =~ trigger_func ]]; then
+    continue
+  fi
+
+  # Check if the line starts with "CREATE" and contains "FUNCTION"
+  if [[ $line =~ ^CREATE[[:space:]]+.*FUNCTION ]]; then
+    # Extract the function name
+    func_name=$(echo "$line" | sed -E 's/CREATE( OR REPLACE)? FUNCTION ([^ ]+)\(.*/\2/')
+
+    # Derive the public function name
+    func_name_pub=$(echo "$func_name" | sed -E 's/^stack_/api_/')
+
+    # Combine the function parameters onto a single line
+    func_param_concat=$(sed -n '/CREATE.*FUNCTION.*(/,/)/p' $input_file | tr -d '\n' | sed -E 's/CREATE( OR REPLACE)? FUNCTION [^(]+\(([^)]+)\).*/\2/')
+
+    # Extract the function parameter names and parameter types into an array
+    IFS=',' read -ra func_param_array <<< "$func_param_concat"
+
+    # Extract the function return type
+    func_return=$(echo "$line" | sed -E 's/.*RETURNS ([^ ]+).*/\1/')
+
+    # Extract the function definition body
+    func_body=$(sed -n '/BEGIN/,/END;/p' $input_file)
+
+    # Extract the function comment, if present
+    func_comment=$(sed -n '/COMMENT ON FUNCTION/p' $input_file)
+
+    # Generate the public wrapper function
+    echo "CREATE FUNCTION $func_name_pub(${func_param_array[@]})
+RETURNS $func_return AS
+\$BODY\$
+BEGIN
+  RETURN wf_private.$func_name(${func_param_array[@]/%/});
+END;
+\$BODY\$
+LANGUAGE plpgsql
+SECURITY DEFINER;
+$func_comment" >> $output_file
+
+    # Add an empty line after each function definition
+    echo "" >> $output_file
+  fi
+done < "$input_file"
+
+# write output file
+echo "Public wrapper functions generated in $output_file"
+```
+
+This script reads the input file line by line and processes the functions based on the given requirements. It extracts the function name, parameters, return type, body, and comment. It then generates the public wrapper function and writes it to the output file. The script also ignores indented lines and lines containing 'trigger_func' in the function name.

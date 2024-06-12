@@ -5,32 +5,7 @@ set -e
 ################################################
 # Script description:
 #
-# This script creates a public-facing SQL schema based on functions defined in a private SQL schema.
-# It reads an input file containing the private schema functions and generates a new file with public-facing
-# wrapper functions that act as a facade for the private functions.
-#
-# The script does the following:
-#
-# 1. Checks if an input file is provided as a command-line argument. If not, it displays a usage message and exits.
-#
-# 2. Sets the input file name based on the provided argument and generates the output file name by appending "_api.sql" to the input file name.
-#
-# 3. Reads the input file line by line using a `while` loop.
-#
-# 4. Ignores any line that is indented or contains 'trigger_func' in the function name.
-#
-# 5. For each non-ignored line that starts with "CREATE" and contains "FUNCTION":
-#    - Extracts the function name and replaces 'stack_' or 'stack_wf_' prefix with 'api_' or 'api_wf_' respectively.
-#    - Combines the function parameters onto a single line.
-#    - Extracts the function parameter names and types.
-#    - Extracts the function return type.
-#    - Extracts the function definition body.
-#    - Extracts the function comment, if present.
-#    - Generates the public wrapper function using the extracted information, calling the corresponding private function.
-#    - Writes the public wrapper function to the output file.
-#    - Adds an empty line after each function definition in the output file.
-#
-# 6. Finally, displays a success message indicating that the public schema has been created in the output file.
+# to be documented here...
 ################################################
 
 # Check if the input file is provided
@@ -39,7 +14,7 @@ if [ $# -eq 0 ]; then
   exit 1
 fi
 
-# Load the script name and path into variables and change to the current directory
+# Load this script name and path into variables and change to the current directory
 TEST_SCRIPTNAME=$(readlink -f "$0")
 TEST_SCRIPTPATH=$(dirname "$TEST_SCRIPTNAME")
 TEST_SCRIPTBASENAME=$(basename "$0")
@@ -50,83 +25,26 @@ TEST_TARGETNAME=$(readlink -f "$1")
 TEST_TARGETPATH=$(dirname "$TEST_TARGETNAME")
 TEST_TARGETBASENAME=$(basename "$1")
 
+# describe the input and out file variables
 input_file=$1
 script_dir=$TEST_SCRIPTPATH
 output_file="$script_dir/${TEST_TARGETBASENAME%.*}_api.sql"
 
+# remove previous results
 rm -f $output_file
 
-# Process each line of the input file
-while IFS= read -r line; do
-  # Ignore indented lines and lines containing 'trigger_func' in the function name
-  if [[ $line =~ ^[[:space:]] || $line =~ trigger_func ]]; then
-    echo 'skipped line'
-    continue
-  fi
-  echo 'not skipped'
+# identify all functions that need to be migrated
+while read -r func_name; do
+  echo "Processing function: $func_name"
 
-  # Check if the line starts with "CREATE" and contains "FUNCTION"
-  if [[ $line =~ ^CREATE.*FUNCTION ]]; then
-    # Extract the function name
-    func_name=$(echo "$line" | awk '{print $5}')
-    echo "func_name: $func_name"
-    public_func_name=$(echo "$func_name" | sed -e 's/stack_wf_/api_wf_/' -e 's/stack_/api_/')
-    echo "public_func_name: $public_func_name"
+  # get public api function name
+  func_name_pub=$(echo "$func_name" | sed -E 's/^stack_/api_/')
+  echo "  - func_name_pub: $func_name_pub"
 
-    # Combine the function parameters onto a single line
-    parameters=$(sed -n '/(/,/)/{/(/h;//!H;/)/G;/)/q;};p' | tr -d '\n')
+  func_param_concat=$(sed -n "/$func_name/,/)/p" $input_file | sed -n '1,/)/p' | sed '$d' | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//; s/stack_wf_request_get_notes//; s/[()]//g; s/\s+/ /g' | sed '/REPLACE/d' | sed 's/,//g' | sed 's/DEFAULT.*//')
+  echo "  - func_param_concat: $func_param_concat"
 
-    # Extract the function parameter names and types
-    param_names=()
-    param_types=()
-    while [[ $parameters =~ ([^[:space:]]+)[[:space:]]+([^,)]+) ]]; do
-      param_names+=("${BASH_REMATCH[1]}")
-      param_types+=("${BASH_REMATCH[2]}")
-      parameters=${parameters#*,}
-    done
-    echo "param_names: ${param_names[@]}"
-    echo "param_types: ${param_types[@]}"
-
-    # Extract the function return type
-    func_return=$(echo "$line" | sed -n 's/^CREATE\s\+OR\s\+REPLACE\s\+FUNCTION\s\+\S\+\s*.*RETURNS\s\+\(\S\+\).*/\1/p')
-    echo "func_return: $func_return"
-
-    # Extract the function definition body
-    func_body=""
-    while IFS= read -r body_line; do
-      if [[ $body_line =~ ^\$\$ ]]; then
-        break
-      fi
-      func_body+="$body_line"$'\n'
-    done
-
-    # Extract the function comment, if present
-    func_comment=""
-    while IFS= read -r comment_line; do
-      if [[ $comment_line =~ ^COMMENT\ ON\ FUNCTION ]]; then
-        func_comment=$(echo "$comment_line" | sed -n "s/.*'\(.*\)'.*/\1/p")
-        break
-      fi
-    done
-
-    # Generate the public wrapper function
-    echo "CREATE FUNCTION $public_func_name($(IFS=','; echo "${param_types[*]}"))" >> "$output_file"
-    echo "RETURNS $func_return AS" >> "$output_file"
-    echo "\$BODY\$" >> "$output_file"
-    echo "BEGIN" >> "$output_file"
-    echo "  RETURN wf_private.$func_name($(IFS=','; echo "${param_names[*]}"));" >> "$output_file"
-    echo "END;" >> "$output_file"
-    echo "\$BODY\$" >> "$output_file"
-    echo "LANGUAGE plpgsql" >> "$output_file"
-    echo "SECURITY DEFINER;" >> "$output_file"
-
-    if [[ -n $func_comment ]]; then
-      echo "COMMENT ON FUNCTION $public_func_name($(IFS=','; echo "${param_types[*]}")) is '$func_comment';" >> "$output_file"
-    fi
-
-    # Add an empty line after each function definition
-    echo "" >> "$output_file"
-  fi
-done < "$input_file"
-
-echo "Public schema created successfully in $output_file"
+  # Add your desired processing steps here
+  # For example, you can execute SQL statements using the function name
+  # psql -c "SELECT $func();" your_database
+done < <(awk '/^CREATE.*FUNCTION/ {sub(/\($/,""); split($0, a, / +/); print a[5]}' $input_file  | awk '!/trigger|sample|stopper/')
