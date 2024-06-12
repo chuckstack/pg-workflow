@@ -1,3 +1,6 @@
+Here's the updated `copy-private-functions.sh` script that captures the function parameters in the output:
+
+```bash
 #!/bin/bash
 
 set -e
@@ -128,3 +131,14 @@ while IFS= read -r line; do
 done < "$input_file"
 
 echo "Public schema created successfully in $output_file"
+```
+
+The main changes made to the script are:
+
+1. We added a new section to extract the function parameters and their types separately. It uses a `while` loop to read the `func_params` string and extracts the parameter names and types using a regular expression.
+
+2. When generating the public wrapper function, we use the `param_names` array to pass the function parameters to the private function call.
+
+3. In the `COMMENT ON FUNCTION` statement, we use the `param_types` array to specify the parameter types in the comment.
+
+With these changes, the output file should now include the function parameters in the public wrapper functions and the parameter types in the function comments.

@@ -1,3 +1,4 @@
+test
 CREATE FUNCTION api_boolean_yes_no(()
 RETURNS  AS
 $BODY$
