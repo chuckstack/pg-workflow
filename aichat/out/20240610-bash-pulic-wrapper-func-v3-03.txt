@@ -1,0 +1,142 @@
+Here's the updated `copy-private-functions.sh` script that captures the function parameters correctly:
+
+```bash
+#!/bin/bash
+
+set -e
+
+################################################
+# Script description:
+#
+# This script creates a public-facing SQL schema based on functions defined in a private SQL schema.
+# It reads an input file containing the private schema functions and generates a new file with public-facing
+# wrapper functions that act as a facade for the private functions.
+#
+# The script does the following:
+#
+# 1. Checks if an input file is provided as a command-line argument. If not, it displays a usage message and exits.
+#
+# 2. Sets the input file name based on the provided argument and generates the output file name by appending "_api.sql" to the input file name.
+#
+# 3. Reads the input file line by line using a `while` loop.
+#
+# 4. Ignores any line that is indented or contains 'trigger_func' in the function name.
+#
+# 5. For each non-ignored line that starts with "CREATE" and contains "FUNCTION":
+#    - Extracts the function name and replaces 'stack_' or 'stack_wf_' prefix with 'api_' or 'api_wf_' respectively.
+#    - Extracts the function parameters and return type.
+#    - Extracts the function definition body.
+#    - Extracts the function comment, if present.
+#    - Generates the public wrapper function using the extracted information, calling the corresponding private function.
+#    - Writes the public wrapper function to the output file.
+#    - Adds an empty line after each function definition in the output file.
+#
+# 6. Finally, displays a success message indicating that the public schema has been created in the output file.
+################################################
+
+# Check if the input file is provided
+if [ $# -eq 0 ]; then
+  echo "Usage: $0 <input_file>"
+  exit 1
+fi
+
+# Load the script name and path into variables and change to the current directory
+TEST_SCRIPTNAME=$(readlink -f "$0")
+TEST_SCRIPTPATH=$(dirname "$TEST_SCRIPTNAME")
+TEST_SCRIPTBASENAME=$(basename "$0")
+cd $TEST_SCRIPTPATH
+
+# Load the input file name and path into variables
+TEST_TARGETNAME=$(readlink -f "$1")
+TEST_TARGETPATH=$(dirname "$TEST_TARGETNAME")
+TEST_TARGETBASENAME=$(basename "$1")
+
+input_file=$1
+script_dir=$TEST_SCRIPTPATH
+output_file="$script_dir/${TEST_TARGETBASENAME%.*}_api.sql"
+
+rm -f $output_file
+
+# Process each line of the input file
+while IFS= read -r line; do
+  # Ignore indented lines and lines containing 'trigger_func' in the function name
+  if [[ $line =~ ^[[:space:]] || $line =~ trigger_func ]]; then
+    echo 'skipped line'
+    continue
+  fi
+  echo 'not skipped'
+
+  # Check if the line starts with "CREATE" and contains "FUNCTION"
+  if [[ $line =~ ^CREATE.*FUNCTION ]]; then
+    # Extract the function name
+    func_name=$(echo "$line" | awk '{print $5}')
+    echo "func_name: $func_name"
+    public_func_name=$(echo "$func_name" | sed -e 's/stack_wf_/api_wf_/' -e 's/stack_/api_/')
+    echo "public_func_name: $public_func_name"
+
+    # Extract the function parameters and return type
+    func_params=$(echo "$line" | sed -n 's/^CREATE\s\+OR\s\+REPLACE\s\+FUNCTION\s\+\S\+\s*(\(.*\))\s\+RETURNS.*/\1/p')
+    echo "func_params: $func_params"
+    func_return=$(echo "$line" | sed -n 's/^CREATE\s\+OR\s\+REPLACE\s\+FUNCTION\s\+\S\+\s*.*RETURNS\s\+\(\S\+\).*/\1/p')
+    echo "func_return: $func_return"
+
+    # Extract the function parameters and their types
+    param_names=()
+    param_types=()
+    while IFS=',' read -ra params; do
+      for param in "${params[@]}"; do
+        if [[ $param =~ ^[[:space:]]*([[:alnum:]_]+)[[:space:]]+([[:alnum:]_]+)[[:space:]]*$ ]]; then
+          param_names+=("${BASH_REMATCH[1]}")
+          param_types+=("${BASH_REMATCH[2]}")
+        fi
+      done
+    done <<< "$func_params"
+
+    # Extract the function definition body
+    func_body=""
+    while IFS= read -r body_line; do
+      if [[ $body_line =~ ^\$\$ ]]; then
+        break
+      fi
+      func_body+="$body_line"$'\n'
+    done
+
+    # Extract the function comment, if present
+    func_comment=""
+    while IFS= read -r comment_line; do
+      if [[ $comment_line =~ ^COMMENT\ ON\ FUNCTION ]]; then
+        func_comment=$(echo "$comment_line" | sed -n "s/.*'\(.*\)'.*/\1/p")
+        break
+      fi
+    done
+
+    # Generate the public wrapper function
+    echo "CREATE FUNCTION $public_func_name($func_params)" >> "$output_file"
+    echo "RETURNS $func_return AS" >> "$output_file"
+    echo "\$BODY\$" >> "$output_file"
+    echo "BEGIN" >> "$output_file"
+    echo "  RETURN wf_private.$func_name(${param_names[@]});" >> "$output_file"
+    echo "END;" >> "$output_file"
+    echo "\$BODY\$" >> "$output_file"
+    echo "LANGUAGE plpgsql" >> "$output_file"
+    echo "SECURITY DEFINER;" >> "$output_file"
+
+    if [[ -n $func_comment ]]; then
+      echo "COMMENT ON FUNCTION $public_func_name(${param_types[@]}) is '$func_comment';" >> "$output_file"
+    fi
+
+    # Add an empty line after each function definition
+    echo "" >> "$output_file"
+  fi
+done < "$input_file"
+
+echo "Public schema created successfully in $output_file"
+```
+
+The main changes made to the script are:
+
+1. The script now extracts the function parameters and their types separately using a `while` loop and regular expressions.
+2. When generating the public wrapper function, it uses the extracted parameter names (`${param_names[@]}`) instead of `${func_params}` to correctly pass the parameters to the private function.
+3. When adding the comment for the public wrapper function, it uses the extracted parameter types (`${param_types[@]}`) to specify the parameter types in the comment.
+
+With these modifications, the script should now generate the public wrapper functions with the correct parameter names and types, as shown in the desired output examples.
