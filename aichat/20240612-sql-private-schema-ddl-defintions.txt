@@ -1,0 +1,6 @@
+I need psql statements to query the following from functions by function name:
+- parameters along with their data types
+- return type
+- comment
+
+Please only return the sql statements. you do not need to explain.

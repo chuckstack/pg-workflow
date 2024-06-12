@@ -1,0 +1,6 @@
+The anatomy of a sql statement is pretty well structured. This is especially true if you use a linter that enforces case, spacing, order, and other standards.
+
+There are times when I need to parse a sql file filled with either tables, views and/or functions. Let's say I have sql ddl artifacts that define a private domain/schema. Let's say I want to expose some of the objects
+
+
+incomplete thought... switched to extracting the public api from the database itself.

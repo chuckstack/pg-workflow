@@ -41,10 +41,22 @@ while read -r func_name; do
   func_name_pub=$(echo "$func_name" | sed -E 's/^stack_/api_/')
   echo "  - func_name_pub: $func_name_pub"
 
+  # get all function parameters as a string with multiple lines
   func_param_concat=$(sed -n "/$func_name/,/)/p" $input_file | sed -n '1,/)/p' | sed '$d' | sed -E 's/^[[:space:]]+//; s/[[:space:]]+$//; s/stack_wf_request_get_notes//; s/[()]//g; s/\s+/ /g' | sed '/REPLACE/d' | sed 's/,//g' | sed 's/DEFAULT.*//')
   echo "  - func_param_concat: $func_param_concat"
 
-  # Add your desired processing steps here
-  # For example, you can execute SQL statements using the function name
-  # psql -c "SELECT $func();" your_database
+  # create a comma delimited list of parameter variables
+  func_param_var=$(echo "$func_param_concat" | awk '{print $1}' | paste -sd,)
+  echo "  - func_param_var: $func_param_var"
+
+  # create a comma delimited list of parameter types
+  func_param_type=$(echo "$func_param_concat" | awk '{print $2}' | paste -sd,)
+  echo "  - func_param_type: $func_param_type"
+
+  # get the return function type
+
+  # did not finish - got side tracked by though about extracting from the database
+
+
+
 done < <(awk '/^CREATE.*FUNCTION/ {sub(/\($/,""); split($0, a, / +/); print a[5]}' $input_file  | awk '!/trigger|sample|stopper/')
