@@ -1,0 +1,96 @@
+To capture the parameter names and types correctly, you can modify the regex pattern and the extraction logic. Here are a few strategies to refine and fix the issue:
+
+1. Update the regex pattern to capture parameter names and types:
+   Replace the following line:
+   ```bash
+   parameters=$(echo "$line" | sed -n -E 's/.*\((.*)\).*/\1/p' | sed -E 's/\s+/,/g')
+   ```
+   with:
+   ```bash
+   parameters=$(echo "$line" | sed -n -E 's/.*\((.*)\).*/\1/p')
+   ```
+   This change will extract the parameter list without replacing whitespace with commas.
+
+2. Modify the parameter extraction logic:
+   Replace the following lines:
+   ```bash
+   IFS=',' read -ra param_array <<< "$parameters"
+   param_names=()
+   param_types=()
+   for param in "${param_array[@]}"; do
+     IFS=' ' read -ra parts <<< "$param"
+     param_names+=("${parts[0]}")
+     param_types+=("${parts[1]}")
+   done
+   ```
+   with:
+   ```bash
+   param_names=()
+   param_types=()
+   while read -r param; do
+     IFS=' ' read -ra parts <<< "$param"
+     param_names+=("${parts[0]}")
+     param_types+=("${parts[1]}")
+   done <<< "$(echo "$parameters" | sed -E 's/,/\n/g')"
+   ```
+   This change splits the parameter list by commas and processes each parameter individually, extracting the parameter name and type.
+
+3. Update the function call in the public wrapper function:
+   Replace the following line:
+   ```bash
+   echo "  RETURN wf_private.$func_name($(IFS=','; echo "${param_names[*]}"));" >> "$output_file"
+   ```
+   with:
+   ```bash
+   echo "  RETURN wf_private.$func_name($(IFS=', '; echo "${param_names[*]}"));" >> "$output_file"
+   ```
+   This change adds a space after the comma when joining the parameter names.
+
+With these modifications, the script should correctly capture the parameter names and types. Here's the updated script with the changes:
+
+```bash
+#!/bin/bash
+
+set -e
+
+# ...
+
+while IFS= read -r line; do
+  # ...
+
+  if [[ $line =~ ^CREATE.*FUNCTION ]]; then
+    # ...
+
+    # Extract the function parameters and their types
+    parameters=$(echo "$line" | sed -n -E 's/.*\((.*)\).*/\1/p')
+    param_names=()
+    param_types=()
+    while read -r param; do
+      IFS=' ' read -ra parts <<< "$param"
+      param_names+=("${parts[0]}")
+      param_types+=("${parts[1]}")
+    done <<< "$(echo "$parameters" | sed -E 's/,/\n/g')"
+    echo "param_names: ${param_names[@]}"
+    echo "param_types: ${param_types[@]}"
+
+    # ...
+
+    # Generate the public wrapper function
+    echo "CREATE FUNCTION $public_func_name($(IFS=','; echo "${param_types[*]}"))" >> "$output_file"
+    echo "RETURNS $func_return AS" >> "$output_file"
+    echo "\$BODY\$" >> "$output_file"
+    echo "BEGIN" >> "$output_file"
+    echo "  RETURN wf_private.$func_name($(IFS=', '; echo "${param_names[*]}"));" >> "$output_file"
+    echo "END;" >> "$output_file"
+    echo "\$BODY\$" >> "$output_file"
+    echo "LANGUAGE plpgsql" >> "$output_file"
+    echo "SECURITY DEFINER;" >> "$output_file"
+
+    # ...
+  fi
+done < "$input_file"
+
+# ...
+```
+
+Give these changes a try and see if they resolve the issue with capturing parameter names and types correctly.

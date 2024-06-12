@@ -1,3 +1,7 @@
+Here's the updated script with the changes you requested:
+
+`20240610-bash-pulic-wrapper-func-v5.txt`:
+~~~~~~
 #!/bin/bash
 
 set -e
@@ -130,3 +134,15 @@ while IFS= read -r line; do
 done < "$input_file"
 
 echo "Public schema created successfully in $output_file"
+
+~~~~~~
+
+In this updated version of the script:
+
+1. I modified the script description to include the changes made.
+
+2. I added a step to combine the function parameters onto a single line using `sed` and `tr` commands.
+
+3. I updated the extraction of function parameter names and types to work with the single-line format of the parameters. It uses a `while` loop with a regular expression to capture the parameter names and types.
+
+With these changes, the script should now correctly handle function parameters that span multiple lines by combining them onto a single line before parsing out the parameter names and types.

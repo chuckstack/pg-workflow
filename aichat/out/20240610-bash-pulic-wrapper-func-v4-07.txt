@@ -1,3 +1,6 @@
+Here's the updated version of the script with the requested changes:
+
+```bash
 #!/bin/bash
 
 set -e
@@ -31,6 +34,10 @@ set -e
 #    - Adds an empty line after each function definition in the output file.
 #
 # 6. Finally, displays a success message indicating that the public schema has been created in the output file.
+#
+# Changes made:
+# - Combined the lines with the parenthesis onto a single line for function parameters.
+# - Updated the parameter parsing logic to handle the combined parameter line.
 ################################################
 
 # Check if the input file is provided
@@ -74,7 +81,7 @@ while IFS= read -r line; do
     echo "public_func_name: $public_func_name"
 
     # Combine the function parameters onto a single line
-    parameters=$(sed -n '/(/,/)/{/(/h;//!H;/)/G;/)/q;};p' | tr -d '\n')
+    parameters=$(sed -n '/(/,/)/{/(/h;//!H;/)/G;s/\n//g;p}')
 
     # Extract the function parameter names and types
     param_names=()
@@ -130,3 +137,12 @@ while IFS= read -r line; do
 done < "$input_file"
 
 echo "Public schema created successfully in $output_file"
+```
+
+The main changes made to the script are:
+
+1. The `parameters` variable is now extracted by combining the lines with parentheses onto a single line using `sed`. The command `/(/,/)/{/(/h;//!H;/)/G;s/\n//g;p}` matches the lines between the opening and closing parentheses, removes the newline characters, and combines them into a single line.
+
+2. The parameter parsing logic remains the same, but it now operates on the combined `parameters` line.
+
+With these changes, the script should be able to handle functions with parameters spanning multiple lines and correctly parse the parameter names and types.

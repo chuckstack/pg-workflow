@@ -1,36 +1,13 @@
+To simplify the code and combine the function parameters into a single line before performing regex extraction, you can modify the script as follows:
+
+```bash
 #!/bin/bash
 
 set -e
 
 ################################################
 # Script description:
-#
-# This script creates a public-facing SQL schema based on functions defined in a private SQL schema.
-# It reads an input file containing the private schema functions and generates a new file with public-facing
-# wrapper functions that act as a facade for the private functions.
-#
-# The script does the following:
-#
-# 1. Checks if an input file is provided as a command-line argument. If not, it displays a usage message and exits.
-#
-# 2. Sets the input file name based on the provided argument and generates the output file name by appending "_api.sql" to the input file name.
-#
-# 3. Reads the input file line by line using a `while` loop.
-#
-# 4. Ignores any line that is indented or contains 'trigger_func' in the function name.
-#
-# 5. For each non-ignored line that starts with "CREATE" and contains "FUNCTION":
-#    - Extracts the function name and replaces 'stack_' or 'stack_wf_' prefix with 'api_' or 'api_wf_' respectively.
-#    - Combines the function parameters onto a single line.
-#    - Extracts the function parameter names and types.
-#    - Extracts the function return type.
-#    - Extracts the function definition body.
-#    - Extracts the function comment, if present.
-#    - Generates the public wrapper function using the extracted information, calling the corresponding private function.
-#    - Writes the public wrapper function to the output file.
-#    - Adds an empty line after each function definition in the output file.
-#
-# 6. Finally, displays a success message indicating that the public schema has been created in the output file.
+# ...
 ################################################
 
 # Check if the input file is provided
@@ -73,16 +50,17 @@ while IFS= read -r line; do
     public_func_name=$(echo "$func_name" | sed -e 's/stack_wf_/api_wf_/' -e 's/stack_/api_/')
     echo "public_func_name: $public_func_name"
 
-    # Combine the function parameters onto a single line
-    parameters=$(sed -n '/(/,/)/{/(/h;//!H;/)/G;/)/q;};p' | tr -d '\n')
+    # Extract the function parameters and their types in a single line
+    parameters=$(echo "$line" | sed -n -E 's/.*\((.*)\).*/\1/p')
+    echo "parameters: $parameters"
 
-    # Extract the function parameter names and types
+    IFS=',' read -ra param_array <<< "$parameters"
     param_names=()
     param_types=()
-    while [[ $parameters =~ ([^[:space:]]+)[[:space:]]+([^,)]+) ]]; do
-      param_names+=("${BASH_REMATCH[1]}")
-      param_types+=("${BASH_REMATCH[2]}")
-      parameters=${parameters#*,}
+    for param in "${param_array[@]}"; do
+      IFS=' ' read -ra parts <<< "$param"
+      param_names+=("${parts[0]}")
+      param_types+=("${parts[1]}")
     done
     echo "param_names: ${param_names[@]}"
     echo "param_types: ${param_types[@]}"
@@ -130,3 +108,14 @@ while IFS= read -r line; do
 done < "$input_file"
 
 echo "Public schema created successfully in $output_file"
+```
+
+The main changes made to the script are:
+
+1. The `parameters` variable is now extracted in a single line using the regex `.*\((.*)\).*`. This captures the entire parameter list within the parentheses.
+
+2. The multiple-line loop to extract the function parameters has been removed since the parameters are now extracted in a single line.
+
+3. The `parameters` variable is directly used to split the parameter list into an array using `IFS=',' read -ra param_array <<< "$parameters"`.
+
+With these modifications, the script should now correctly capture the function parameters and populate the `parameters` variable. The rest of the script remains the same.

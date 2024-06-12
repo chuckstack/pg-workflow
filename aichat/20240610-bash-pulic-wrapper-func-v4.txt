@@ -1,0 +1,44 @@
+I need your help debugging why the following script fails to capture the $parameters variable in the script: copy-private-functions.sh
+
+Here is an example sql function that it is trying to parse:
+```sql
+CREATE OR REPLACE FUNCTION stack_wf_request_get_notes(
+    p_request_uu uuid,
+    p_note_count integer
+)
+RETURNS text[] AS $$
+DECLARE
+    v_notes text[];
+BEGIN
+    select array_agg(concat_ws(' by: ', note, name)) into v_notes
+    from (
+        select n.note, concat_ws(' ', u.first_name, u.last_name) as name
+        from stack_wf_request_note n
+        join stack_user u on n.stack_user_uu = n.stack_user_uu
+        where n.stack_wf_request_uu = p_request_uu
+        order by n.created desc
+        limit p_note_count
+    ) t;
+    return v_notes;
+
+END;
+$$ LANGUAGE plpgsql;
+COMMENT ON FUNCTION stack_wf_request_get_notes(uuid,integer) is 'Function to
+list request last x notes';
+```
+Note that the function parameters appear across multiple lines
+```
+(
+     p_request_uu uuid,
+     p_note_count integer
+)
+```
+
+I want you to update the script to perform the following:
+- first: combine the lines with the parenthesis onto a single line like this: (p_request_uu uuid, p_note_count integer)
+- second: then parse out the parameter names and types.
+
+The current script is failing with the following error:
+./copy-private-functions.sh: line 82: syntax error in conditional expression: unexpected token `)'
+
+Please produce a new version of the file including an updated description.
