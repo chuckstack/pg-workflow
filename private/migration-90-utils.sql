@@ -1,3 +1,8 @@
+--two ways to reference tables:
+-- pg_class (tables, views, etc..) - deep psql internal
+-- information_schema.tables - ansi standard and more user friendly
+-- see psql-trigger-function-table-name-change-log* in aichat/session
+
 -- get the function name, return type and parameters
 SELECT r.routine_name AS function_name,
        r.data_type AS return_type,
