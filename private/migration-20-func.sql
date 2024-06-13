@@ -121,7 +121,7 @@ DECLARE
 BEGIN
     select array_agg(concat_ws(' by: ', note, name)) into v_notes
     from (
-        select n.note, concat_ws(' ', u.first_name, u.last_name) as name
+        select n.note, concat_ws(' ', u.name_first, u.name_last) as name
         from stack_wf_request_note n
         join stack_user u on n.stack_user_uu = n.stack_user_uu
         where n.stack_wf_request_uu = p_request_uu
@@ -246,7 +246,7 @@ BEGIN
 
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION stack_wf_request_do_action(uuid) is 'This function performs the action linked to the supplied transition.'
+COMMENT ON FUNCTION stack_wf_request_do_action(uuid) is 'This function performs the action linked to the supplied transition.';
 
 -- Trigger function to help create activity history records
 CREATE OR REPLACE FUNCTION stack_wf_request_activity_history_trigger_func()
@@ -303,7 +303,7 @@ BEGIN
     RETURN NEW;
 END;
 $$ LANGUAGE plpgsql;
-COMMENT ON FUNCTION stack_wf_request_activity_history_trigger_func() is 'This trigger function automates inserting records into the request activity history table. These records resemble traditional workflow tasks.'
+COMMENT ON FUNCTION stack_wf_request_activity_history_trigger_func() is 'This trigger function automates inserting records into the request activity history table. These records resemble traditional workflow tasks.';
 
 -- Trigger to call the function to help create activity history records
 CREATE TRIGGER stack_wf_request_activity_history_trigger

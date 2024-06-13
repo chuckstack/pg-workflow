@@ -7,6 +7,7 @@
   -- tables use uuid as primary keys. The purpose of this decision is to make creating very large (and often replicated) systems easier to manage. Doing so also allows for clients to define their own uuid values.
   -- all tables have a single primary key (even if it is a link table). The purpose of this decision is that it enables the concept of table_name + record_uu identification. Said another way, if you know the table_name and the record_uu of any given record, you can always find the details associated with that record. This convention also allows for maintaining centralized logs, attachments, and attributes.
   -- search_key is a user defined alphanumeric. The purpose of this column is to allow users to create keys that are more easily remembered by humans. It is up to the implementor to determine if the search_key should be unique. If it should be unique, the implementor determines the criteria for being unique. search_key columns are most appropriate for tables that maintain a primary concept but the record is not considered transactional. Examples of non-transactional records include users, business partners, and products.
+  -- value is a text that is often used with a search_key in a key-value pair.
   -- document_no is a user defined alphanumeric. The purpose of this column is to allow the system to auto-populate auto-incrementing document numbers. It is up to the implementor to determine if the document_no should be unique. If it should be unique, the implementor determines the criteria for being unique. document_no are most appropriate for tables that represent transactional data. Examples of a transaction records include invoices, orders, and payments.
   -- created is a timestamp indicating when the record was created.
   -- created_by is a uuid pointing to the database user/role that created the record.
@@ -20,20 +21,70 @@
   -- concept of function => create_from vs create_into -- attempt to support both when possible
   -- use text (over varchar with unspecified length)
 
+--CREATE TABLE stack_xxx (
+--  stack_xxx_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+--  created TIMESTAMP NOT NULL DEFAULT now(),
+--  search_key VARCHAR(255) NOT NULL,
+--  name TEXT NOT NULL,
+--  value TEXT NOT NULL,
+--  description TEXT,
+--  is_default BOOLEAN DEFAULT false,
+--  is_processed BOOLEAN DEFAULT false,
+--  is_active BOOLEAN DEFAULT true
+--);
+--COMMENT ON TABLE stack_xxx IS 'Table that contains xxx';
+
+CREATE TABLE stack_attribute_set (
+  stack_attribute_set_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created TIMESTAMP NOT NULL DEFAULT now(),
+  search_key VARCHAR(255) NOT NULL,
+  description TEXT
+);
+COMMENT ON TABLE stack_attribute_set IS 'Table that defines a collections of attributes';
+
+CREATE TABLE stack_attribute_type (
+  stack_attribute_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created TIMESTAMP NOT NULL DEFAULT now(),
+  search_key VARCHAR(255) NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT
+);
+COMMENT ON TABLE stack_attribute_type IS 'Table that that represents the types of attributes. An attribute type is a set of standardized, cross-table prepresentation of the types of attributes that exist. The purpose of this table is to provide reporting options for the resulting attributes. The values in this table are near static, and they will not often change.';
+
+INSERT INTO stack_attribute_type (stack_attribute_type_uu,search_key,name,description) 
+VALUES
+('637de1a5-0e74-463c-b778-fa9a5235968e','text','Text',null),
+('2532539a-8c49-4982-b585-86f8986f87e7','date','Date',null),
+('4eb24d17-92f8-403e-b4cf-57cff8fd04f9','boolean','Boolean',null),
+('dd463e75-dde7-4876-83de-1e6f14120f19','numeric','Numeric',null),
+('7695fa4b-941b-4e50-ad51-b6f821c7f107','attribute','Attribute',null),
+('1f0d0586-6e9c-4aeb-aa73-ad4b1cee26a9','table','Table',null);
+
+CREATE TABLE stack_attribute (
+  stack_attribute_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created TIMESTAMP NOT NULL DEFAULT now(),
+  stack_attribute_set_uu UUID,
+  stack_attribute_type_uu UUID,
+  search_key VARCHAR(255) NOT NULL,
+  name TEXT NOT NULL,
+  description TEXT
+);
+COMMENT ON TABLE stack_attribute IS 'Table that defines an attribute. An attribute might be a part of an attribute set.';
 
 CREATE TABLE stack_user (
   stack_user_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   created TIMESTAMP NOT NULL DEFAULT now(),
   search_key VARCHAR(255) NOT NULL,
-  last_name VARCHAR(255) NOT NULL,
-  first_name VARCHAR(255) NOT NULL,
-  email VARCHAR(255),
+  name_last TEXT,
+  name_first TEXT,
+  name TEXT,
+  email TEXT,
   description TEXT
 );
 COMMENT ON TABLE stack_user IS 'Table that contains users. Users are a cross-process represenation of actors in a workflow. Any one user can participate in multiple processes. See also: stack_wf_group.';
 
 -- create a default user
-INSERT INTO stack_user (stack_user_uu, search_key, first_name, last_name, email, description)
+INSERT INTO stack_user (stack_user_uu, search_key, name_first, name_last, email, description)
 VALUES
   ('984c9035-3be3-4998-b3e9-46620b091559', 'super_user', 'Super', 'User', 'superuser@system.com', 'First user created');
 
@@ -41,7 +92,7 @@ CREATE TABLE stack_wf_process_type (
   stack_wf_process_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   created TIMESTAMP NOT NULL DEFAULT now(),
   search_key VARCHAR(255) NOT NULL,
-  name VARCHAR(255) NOT NULL,
+  name TEXT NOT NULL,
   description TEXT,
   UNIQUE (search_key)
 );
@@ -60,7 +111,7 @@ CREATE TABLE stack_wf_target_type (
   created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_target_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   search_key VARCHAR(255) NOT NULL,
-  name VARCHAR(255) NOT NULL,
+  name TEXT NOT NULL,
   description TEXT,
   UNIQUE (search_key)
 );
@@ -79,7 +130,7 @@ CREATE TABLE stack_wf_state_type (
   created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_state_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   search_key VARCHAR(255) NOT NULL,
-  name VARCHAR(255) NOT NULL,
+  name TEXT NOT NULL,
   is_default BOOLEAN DEFAULT FALSE,
   description TEXT,
   UNIQUE (search_key)
@@ -101,7 +152,7 @@ CREATE TABLE stack_wf_resolution_type (
   created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_resolution_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   search_key VARCHAR(255) NOT NULL,
-  name VARCHAR(255) NOT NULL,
+  name TEXT NOT NULL,
   is_default BOOLEAN DEFAULT FALSE,
   description TEXT,
   UNIQUE (search_key)
@@ -123,7 +174,7 @@ CREATE TABLE stack_wf_activity_type (
   created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_activity_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   search_key VARCHAR(255) NOT NULL,
-  name VARCHAR(255) NOT NULL,
+  name TEXT NOT NULL,
   description TEXT,
   UNIQUE (search_key)
 );
@@ -143,7 +194,7 @@ CREATE TABLE stack_wf_action_type (
   created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_action_type_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   search_key VARCHAR(255) NOT NULL,
-  name VARCHAR(255) NOT NULL,
+  name TEXT NOT NULL,
   description TEXT,
   UNIQUE (search_key)
 );
@@ -176,7 +227,7 @@ CREATE TABLE stack_wf_process (
   stack_wf_process_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_process_type_uu UUID NOT NULL,
   search_key VARCHAR(255) NOT NULL,
-  name VARCHAR(255) NOT NULL,
+  name TEXT NOT NULL,
   is_template BOOLEAN NOT NULL DEFAULT FALSE,
   is_processed BOOLEAN NOT NULL DEFAULT FALSE,
   description TEXT,
@@ -188,7 +239,7 @@ CREATE TABLE stack_wf_group (
   created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_group_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   search_key VARCHAR(255) NOT NULL,
-  name VARCHAR(255) NOT NULL,
+  name TEXT NOT NULL,
   description TEXT,
   stack_wf_process_uu UUID NOT NULL,
   FOREIGN KEY (stack_wf_process_uu) REFERENCES stack_wf_process(stack_wf_process_uu)
@@ -229,7 +280,7 @@ CREATE TABLE stack_wf_target (
   stack_wf_target_type_uu UUID NOT NULL,
   stack_wf_process_uu UUID NOT NULL,
   search_key VARCHAR(255) NOT NULL,
-  name VARCHAR(255) NOT NULL,
+  name TEXT NOT NULL,
   description TEXT,
   FOREIGN KEY (stack_wf_target_type_uu) REFERENCES stack_wf_target_type(stack_wf_target_type_uu),
   FOREIGN KEY (stack_wf_process_uu) REFERENCES stack_wf_process(stack_wf_process_uu)
@@ -242,7 +293,7 @@ CREATE TABLE stack_wf_state (
   stack_wf_state_type_uu UUID NOT NULL,
   stack_wf_process_uu UUID NOT NULL,
   search_key VARCHAR(255) NOT NULL,
-  name VARCHAR(255) NOT NULL,
+  name TEXT NOT NULL,
   description TEXT,
   FOREIGN KEY (stack_wf_state_type_uu) REFERENCES stack_wf_state_type(stack_wf_state_type_uu),
   FOREIGN KEY (stack_wf_process_uu) REFERENCES stack_wf_process(stack_wf_process_uu)
@@ -255,7 +306,7 @@ CREATE TABLE stack_wf_resolution (
   stack_wf_resolution_type_uu UUID NOT NULL,
   stack_wf_process_uu UUID NOT NULL,
   search_key VARCHAR(255) NOT NULL,
-  name VARCHAR(255) NOT NULL,
+  name TEXT NOT NULL,
   description TEXT,
   FOREIGN KEY (stack_wf_resolution_type_uu) REFERENCES stack_wf_resolution_type(stack_wf_resolution_type_uu),
   FOREIGN KEY (stack_wf_process_uu) REFERENCES stack_wf_process(stack_wf_process_uu)
@@ -268,7 +319,7 @@ CREATE TABLE stack_wf_action (
   stack_wf_action_type_uu UUID NOT NULL,
   stack_wf_process_uu UUID NOT NULL,
   search_key VARCHAR(255) NOT NULL,
-  name VARCHAR(255) NOT NULL,
+  name TEXT NOT NULL,
   description TEXT,
   FOREIGN KEY (stack_wf_action_type_uu) REFERENCES stack_wf_action_type(stack_wf_action_type_uu),
   FOREIGN KEY (stack_wf_process_uu) REFERENCES stack_wf_process(stack_wf_process_uu)
@@ -323,8 +374,8 @@ CREATE TABLE stack_wf_request_data (
   created TIMESTAMP NOT NULL DEFAULT now(),
   stack_wf_request_data_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_request_uu UUID NOT NULL,
-  name VARCHAR(255) NOT NULL,
-  value VARCHAR(255) NOT NULL,
+  name TEXT NOT NULL,
+  value TEXT NOT NULL,
   FOREIGN KEY (stack_wf_request_uu) REFERENCES stack_wf_request(stack_wf_request_uu)
 );
 COMMENT ON TABLE stack_wf_request_data IS 'Table that stores highly-variable data associated with a specific request. This is a request attribute table.';
@@ -334,7 +385,7 @@ CREATE TABLE stack_wf_request_file (
   stack_wf_request_file_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   stack_wf_request_uu UUID NOT NULL,
   stack_user_uu UUID NOT NULL,
-  file_name VARCHAR(255) NOT NULL,
+  file_name TEXT NOT NULL,
   file_content BYTEA NOT NULL,
   mime_type VARCHAR(255) NOT NULL,
   FOREIGN KEY (stack_wf_request_uu) REFERENCES stack_wf_request(stack_wf_request_uu),
@@ -360,7 +411,7 @@ CREATE TABLE stack_wf_activity (
   stack_wf_activity_type_uu UUID NOT NULL,
   stack_wf_process_uu UUID NOT NULL,
   search_key VARCHAR(255) NOT NULL,
-  name VARCHAR(255) NOT NULL,
+  name TEXT NOT NULL,
   description TEXT,
   FOREIGN KEY (stack_wf_activity_type_uu) REFERENCES stack_wf_activity_type(stack_wf_activity_type_uu),
   FOREIGN KEY (stack_wf_process_uu) REFERENCES stack_wf_process(stack_wf_process_uu)
