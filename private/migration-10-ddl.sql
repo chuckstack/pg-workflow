@@ -20,6 +20,8 @@
   -- when naming columns the noun comes first and the adjective comes next. Example: stack_wf_state_next_uu where state is the noun and next is the adjective. The benefit of this approach is that like columns (and the resulting methods/calls) appear next to each other alphabetically.
   -- concept of function => create_from vs create_into -- attempt to support both when possible
   -- use text (over varchar with unspecified length)
+  -- link tables alway have a single primary uuid key
+  -- link table have the suffix _lnk
 
 --CREATE TABLE stack_xxx (
 --  stack_xxx_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -67,9 +69,40 @@ CREATE TABLE stack_attribute (
   stack_attribute_type_uu UUID,
   search_key VARCHAR(255) NOT NULL,
   name TEXT NOT NULL,
-  description TEXT
+  description TEXT,
+  FOREIGN KEY (stack_attribute_set_uu) REFERENCES stack_attribute_set(stack_attribute_set_uu),
+  FOREIGN KEY (stack_attribute_type_uu) REFERENCES stack_attribute_type(stack_attribute_type_uu)
 );
 COMMENT ON TABLE stack_attribute IS 'Table that defines an attribute. An attribute might be a part of an attribute set.';
+
+CREATE TABLE stack_attribute_value (
+  stack_attribute_value_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created TIMESTAMP NOT NULL DEFAULT now(),
+  stack_attribute_uu UUID,
+  value_text TEXT,
+  value_date TIMESTAMP,
+  value_boolean BOOLEAN,
+  value_numeric NUMERIC,
+  --todo: need value_attribute
+  --todo: need value_table/record_uu
+  description TEXT,
+  FOREIGN KEY (stack_attribute_uu) REFERENCES stack_attribute(stack_attribute_uu)
+);
+COMMENT ON TABLE stack_attribute IS 'Table that defines an attribute. An attribute might be a part of an attribute set.';
+
+CREATE TABLE stack_attribute_set_attribute_lnk (
+  stack_attribute_set_attribute_lnk_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created TIMESTAMP NOT NULL DEFAULT now(),
+  stack_attribute_set_uu UUID,
+  stack_attribute_uu UUID,
+  search_key VARCHAR(255) NOT NULL,
+  name TEXT NOT NULL,
+  value TEXT NOT NULL,
+  description TEXT,
+  FOREIGN KEY (stack_attribute_set_uu) REFERENCES stack_attribute_set(stack_attribute_set_uu),
+  FOREIGN KEY (stack_attribute_uu) REFERENCES stack_attribute(stack_attribute_uu)
+);
+COMMENT ON TABLE stack_attribute_set_attribute_lnk IS 'Table that links attributes to attributes sets.';
 
 CREATE TABLE stack_user (
   stack_user_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
