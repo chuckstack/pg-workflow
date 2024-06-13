@@ -88,7 +88,7 @@ CREATE TABLE stack_attribute_value (
   description TEXT,
   FOREIGN KEY (stack_attribute_uu) REFERENCES stack_attribute(stack_attribute_uu)
 );
-COMMENT ON TABLE stack_attribute IS 'Table that defines an attribute. An attribute might be a part of an attribute set.';
+COMMENT ON TABLE stack_attribute IS 'Table that defines an attribute value. An attribute value is either owned by an attribute set instance or an individual attribute. If it is owned by an attribute set instance, its value will be not null. If it is owned by an individual attribute, its table and record will be not null.';
 
 CREATE TABLE stack_attribute_set_attribute_lnk (
   stack_attribute_set_attribute_lnk_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
