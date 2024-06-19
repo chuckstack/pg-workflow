@@ -30,14 +30,3 @@ psql $psql_test -c " reassign owned by $TEST_USER to $TEST_USER_ADMIN "
 psql $psql_test -c " drop owned by $TEST_USER "
 psql $psql_admin -c " drop user if exists $TEST_USER "
 psql $psql_admin -c " drop database if exists $TEST_DB "
-
-
-psql $psql_admin -c " create database $TEST_DB "
-psql $psql_test -c " create schema $TEST_SCHEMA "
-psql $psql_test -c " create role $TEST_USER with login password '$TEST_USER_PASSWORD'"
-psql $psql_test -c " grant connect on database $TEST_DB to $TEST_USER "
-psql $psql_test -c " grant create, usage on schema $TEST_SCHEMA to $TEST_USER "
-psql $psql_test -c " grant select, insert, update, delete on all tables in schema $TEST_SCHEMA to $TEST_USER; "
-psql $psql_test -c " alter default privileges in schema $TEST_SCHEMA grant select on tables to $TEST_USER; "
-psql $psql_test -c " alter role $TEST_USER set search_path to $TEST_SCHEMA "
-

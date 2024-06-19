@@ -11,9 +11,13 @@ source test.properties
 
 psql_test="$TEST_PSQL_HOST $TEST_PSQL_ERR_STOP $TEST_PSQL_USER $TEST_PSQL_DB"
 
-echo '-------begin 01-create-test-artifacts.sh-------'
-./01-create-test-artifacts.sh
-echo '-------end 01-create-test-artifacts.sh-------'
+echo '-------begin 01-delete-test-artifacts.sh-------'
+./01-delete-test-artifacts.sh
+echo '-------end 01-delete-test-artifacts.sh-------'
+
+echo '-------begin 02-create-test-artifacts.sh-------'
+./02-create-test-artifacts.sh
+echo '-------end 02-create-test-artifacts.sh-------'
 
 echo '-------begin migration-10-------'
 echo "psql_test: $psql_test"
@@ -29,6 +33,11 @@ echo '-------begin migration-30-------'
 echo "psql_test: $psql_test"
 psql $psql_test -f ../private/migration-30-public-schema.sql
 echo '-------end migration-30-------'
+
+echo '-------begin migration-30-execute-------'
+echo "psql_test: $psql_test"
+psql $psql_test -c "select $TEST_SCHEMA.create_public_views()"
+echo '-------end migration-30-execute-------'
 
 echo '-------begin migration-40-------'
 echo "psql_test: $psql_test"

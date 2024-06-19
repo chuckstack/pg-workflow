@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION create_public_views(public_schema_name TEXT)
+CREATE OR REPLACE FUNCTION create_public_views(public_schema_name TEXT DEFAULT 'api')
 RETURNS VOID AS $$
 DECLARE
   private_table RECORD;
