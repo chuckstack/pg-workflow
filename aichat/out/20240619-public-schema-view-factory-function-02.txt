@@ -1,0 +1,69 @@
+Here's a PL/pgSQL function that addresses your requirements:
+
+```sql
+CREATE OR REPLACE FUNCTION create_public_schema(public_schema_name TEXT)
+RETURNS VOID AS $$
+DECLARE
+  private_table RECORD;
+  public_view_name TEXT;
+  table_comment TEXT;
+BEGIN
+  -- Create the public schema if it doesn't exist
+  EXECUTE format('CREATE SCHEMA IF NOT EXISTS %I', public_schema_name);
+
+  -- Iterate over tables starting with 'stack'
+  FOR private_table IN (
+    SELECT table_name
+    FROM information_schema.tables
+    WHERE table_schema = current_schema() AND table_name LIKE 'stack%'
+  )
+  LOOP
+    -- Transform the table name for the public view
+    IF private_table.table_name LIKE 'stack_wf_%' THEN
+      public_view_name := 'api_wf_' || substring(private_table.table_name, 10);
+    ELSE
+      public_view_name := 'api_' || substring(private_table.table_name, 7);
+    END IF;
+
+    -- Get the comment of the private table
+    SELECT obj_description(private_table.table_name::regclass, 'pg_class') INTO table_comment;
+
+    -- Create the pass-through view in the public schema
+    EXECUTE format('CREATE OR REPLACE VIEW %I.%I AS SELECT * FROM %I.%I',
+                   public_schema_name, public_view_name, current_schema(), private_table.table_name);
+
+    -- Set the comment on the public view
+    IF table_comment IS NOT NULL THEN
+      EXECUTE format('COMMENT ON VIEW %I.%I IS %L',
+                     public_schema_name, public_view_name, table_comment);
+    END IF;
+  END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+This function does the following:
+
+1. It takes the public schema name as a text parameter (`public_schema_name`).
+
+2. It creates the public schema if it doesn't exist using the `CREATE SCHEMA IF NOT EXISTS` command.
+
+3. It iterates over the tables in the current schema that start with 'stack' using a `FOR` loop and the `information_schema.tables` view.
+
+4. For each table, it transforms the table name based on the rules you provided:
+   - If the table name starts with 'stack_wf_', it replaces 'stack_wf_' with 'api_wf_'.
+   - Otherwise, it replaces 'stack_' with 'api_'.
+
+5. It retrieves the comment of the private table using the `obj_description` function.
+
+6. It creates a pass-through view in the public schema using the transformed table name and the `CREATE OR REPLACE VIEW` command.
+
+7. If the private table has a comment, it sets the same comment on the public view using the `COMMENT ON VIEW` command.
+
+To use this function, you can simply call it with the desired public schema name. For example:
+
+```sql
+SELECT create_public_schema('public_facade');
+```
+
+This will create the public schema named 'public_facade' (if it doesn't exist) and create pass-through views for all tables starting with 'stack' in the current schema, following the naming conventions you specified. The comments from the private tables will be preserved on the corresponding public views.

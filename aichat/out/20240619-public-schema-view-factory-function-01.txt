@@ -1,0 +1,60 @@
+Here's a PL/pgSQL function that accomplishes the tasks you described:
+
+```sql
+CREATE OR REPLACE FUNCTION create_public_views(public_schema_name TEXT) RETURNS VOID AS $$
+DECLARE
+  table_name TEXT;
+  table_comment TEXT;
+  public_view_name TEXT;
+BEGIN
+  -- Iterate over tables starting with 'stack'
+  FOR table_name IN SELECT relname FROM pg_class WHERE relname LIKE 'stack%' AND relkind = 'r' LOOP
+    -- Get the comment of the current table
+    SELECT obj_description('"' || table_name || '"'::regclass) INTO table_comment;
+    
+    -- Determine the public view name based on the table name
+    IF table_name LIKE 'stack_wf_%' THEN
+      public_view_name := 'api_wf_' || substring(table_name FROM 10);
+    ELSE
+      public_view_name := 'api_' || substring(table_name FROM 7);
+    END IF;
+    
+    -- Create the pass-through view in the public schema
+    EXECUTE format('CREATE OR REPLACE VIEW %I.%I AS SELECT * FROM %I', public_schema_name, public_view_name, table_name);
+    
+    -- Set the comment on the public view
+    IF table_comment IS NOT NULL THEN
+      EXECUTE format('COMMENT ON VIEW %I.%I IS %L', public_schema_name, public_view_name, table_comment);
+    END IF;
+  END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+Here's how the function works:
+
+1. The function takes the public schema name as a text parameter (`public_schema_name`).
+
+2. It uses a `FOR` loop to iterate over all tables in the current schema that start with 'stack' and are of type 'r' (regular table).
+
+3. For each table, it retrieves the table comment using the `obj_description()` function and stores it in the `table_comment` variable.
+
+4. It determines the public view name based on the table name:
+   - If the table name starts with 'stack_wf_', it replaces 'stack_wf_' with 'api_wf_'.
+   - If the table name starts with 'stack_', it replaces 'stack_' with 'api_'.
+
+5. It uses the `EXECUTE` command with the `format()` function to create the pass-through view in the public schema. The view is created with the same name as the table, but with the prefix changed to 'api_' or 'api_wf_'.
+
+6. If the table has a comment, it sets the same comment on the public view using another `EXECUTE` command with the `format()` function.
+
+7. The loop continues until all matching tables have been processed.
+
+To use this function, you would simply call it with the desired public schema name:
+
+```sql
+SELECT create_public_views('public');
+```
+
+This will create the public views for all tables starting with 'stack' in the current schema, with the views being created in the 'public' schema.
+
+Note: Make sure to replace 'public' with the actual name of your public schema if it's different.

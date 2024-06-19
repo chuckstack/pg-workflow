@@ -1,0 +1,33 @@
+I want your help to creating a public facing sql schema. Here are the details:
+- I have a private sql schema where I create tables, views and functions to help support a domain.
+- I want to create a public sql schema that acts as a facade so a) that others can interact with the domain and b) so that I can control what changes the public sees.
+- The private schema already exists. It consists of a bunch of tables.
+- I want you to help me write a plpgsql function that does the following:
+    - create the public facing schema if it does not exist
+    - takes the public facing schema name as a text parameter
+    - finds all tables that begin with 'stack'
+    - iterates across the list of tables
+    - creates a pass-through view in the public schema
+    - the public facing view should change the table name from 'stack_' or 'stack_wf_' to 'api_' and 'api_wf_' respectively. Here is an example; stack_user => api_user.
+    - we need to keep the private table's comment on the public facing view.
+
+example private table definition:
+``` sql
+CREATE TABLE stack_user (
+  stack_user_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  created TIMESTAMP NOT NULL DEFAULT now(),
+  search_key VARCHAR(255) NOT NULL,
+  name_last TEXT,
+  name_first TEXT,
+  name TEXT,
+  email TEXT,
+  description TEXT
+);
+COMMENT ON TABLE stack_user IS 'Table that contains users. Users are a cross-process represenation of actors in a workflow. Any one user can participate in multiple processes. See also: stack_wf_group.';
+```
+
+example public view definition:
+```
+CREATE VIEW api_user AS SELECT * FROM stack_user;
+COMMENT ON VIEW api_user IS 'Table that contains users. Users are a cross-process represenation of actors in a workflow. Any one user can participate in multiple processes. See also: stack_wf_group.';
+```

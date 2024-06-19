@@ -27,8 +27,13 @@ echo '-------end migration-20-------'
 
 echo '-------begin migration-30-------'
 echo "psql_test: $psql_test"
-psql $psql_test -f ../private/migration-30-template-approval-traditional.sql
+psql $psql_test -f ../private/migration-30-public-schema.sql
 echo '-------end migration-30-------'
+
+echo '-------begin migration-40-------'
+echo "psql_test: $psql_test"
+psql $psql_test -f ../private/migration-40-template-approval-traditional.sql
+echo '-------end migration-40-------'
 
 echo '-------begin 10_migration-30-seed.sh-------'
 ./10_migration-30-seed.sh
