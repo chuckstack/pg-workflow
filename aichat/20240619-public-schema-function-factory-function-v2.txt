@@ -1,0 +1,28 @@
+I have a psql function named create_public_functions(). This function does the following:
+1. Creates the public schema if it doesn't exist.
+2. Iterates over the private functions starting with 'stack' and not containing 'trigger_func' in the name.
+3. Transforms the function name for the public function by replacing 'stack_' with 'api_' or 'stack_wf_' with 'api_wf_'.
+4. Retrieves the comment of the private function.
+5. Constructs the pass-through function definition in the public schema using the transformed function name and the argument types of the private function.
+6. Executes the function definition to create the public function.
+7. Sets the comment on the public function if the private function has a comment.
+
+When executing, it gives the followng error:
+ERROR:  42601: syntax error at or near "AS"
+LINE 3:         RETURNS SETOF  AS
+                               ^
+QUERY:
+        CREATE OR REPLACE FUNCTION api.api_boolean_open_close(arg)
+        RETURNS SETOF  AS
+        $BODY$
+        BEGIN
+          RETURN stack_boolean_open_close(arg);
+        END;
+        $BODY$
+        LANGUAGE plpgsql
+        SECURITY DEFINER;
+
+CONTEXT:  PL/pgSQL function create_public_functions(text) line 55 at EXECUTE
+LOCATION:  scanner_yyerror, scan.l:1188
+
+If you can see the error, please recommend a fix. Otherwise, I believe we need to simply the function_definition variable by moving some logic out of the format statement and into its own variable.

@@ -1,0 +1,54 @@
+I want your help to creating a public facing sql schema. Here are the details:
+- I have a private sql schema where I create tables, views and functions to help support a domain.
+- I want to create a public sql schema that acts as a facade so a) that others can interact with the domain and b) so that I can control what changes the public sees.
+- The private schema already exists. It consists of a bunch of tables and functions.
+- I want you to help me write a plpgsql function named "create_public_functions(...)" that does the following:
+    - create the public facing schema if it does not exist
+    - takes the public facing schema name as a text parameter and defaults to 'api'
+    - finds all functions that begin with 'stack' and does not contain the words 'trigger_func' in the name of the function.
+    - iterates across the list of functions
+    - creates a pass-through function in the public api schema
+    - the public facing function name should change from 'stack_' or 'stack_wf_' to 'api_' and 'api_wf_' respectively. Here is an example; stack_wf_request_get_notes(...) => api_wf_request_get_notes(...).
+    - we need to keep the private function's comment on the public facing function.
+
+Here is an example of a private function.
+``` sql
+CREATE OR REPLACE FUNCTION stack_wf_request_get_notes(
+    p_request_uu uuid,
+    p_note_count integer
+)
+RETURNS text[] AS $$
+DECLARE
+    v_notes text[];
+BEGIN
+    select array_agg(concat_ws(' by: ', note, name)) into v_notes
+    from (
+        select n.note, concat_ws(' ', u.first_name, u.last_name) as name
+        from stack_wf_request_note n
+        join stack_user u on n.stack_user_uu = n.stack_user_uu
+        where n.stack_wf_request_uu = p_request_uu
+        order by n.created desc
+        limit p_note_count
+    ) t;
+    return v_notes;
+
+END;
+$$ LANGUAGE plpgsql;
+COMMENT ON FUNCTION stack_wf_request_get_notes(uuid,integer) is 'Function to list request last x notes';
+```
+
+Here is an example of the expected output from the public api function.
+```
+CREATE FUNCTION api.api_wf_request_get_notes(p_request_uu uuid, p_note_count integer)
+RETURNS text AS
+$BODY$
+BEGIN
+  RETURN private.stack_wf_request_get_notes(p_request_uu, p_note_count);
+END;
+$BODY$
+LANGUAGE plpgsql
+SECURITY DEFINER;
+COMMENT ON FUNCTION api_wf_request_get_notes(uuid,integer) is 'Function to list request last x notes';
+```
+
+We have already created a similar function, create_public_views(...), that creates public pass-through views. I am offering this as a reference just in case it helps us create the newly requested function.

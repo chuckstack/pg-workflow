@@ -1,0 +1,81 @@
+Here's the `create_public_functions` function that creates pass-through functions in the public schema based on the private functions:
+
+```sql
+CREATE OR REPLACE FUNCTION create_public_functions(public_schema_name TEXT DEFAULT 'api')
+RETURNS VOID AS $$
+DECLARE
+  private_function RECORD;
+  public_function_name TEXT;
+  function_comment TEXT;
+  function_definition TEXT;
+BEGIN
+  -- Create the public schema if it doesn't exist
+  EXECUTE format('CREATE SCHEMA IF NOT EXISTS %I', public_schema_name);
+
+  -- Iterate over functions starting with 'stack' and not containing 'trigger_func'
+  FOR private_function IN (
+    SELECT proname, oidvectortypes(proargtypes) AS arg_types, prokind, prosrc
+    FROM pg_proc
+    WHERE proname LIKE 'stack%' AND proname NOT LIKE '%trigger_func%'
+  )
+  LOOP
+    -- Transform the function name for the public function
+    IF private_function.proname LIKE 'stack_wf_%' THEN
+      public_function_name := 'api_wf_' || substring(private_function.proname, 10);
+    ELSE
+      public_function_name := 'api_' || substring(private_function.proname, 7);
+    END IF;
+
+    -- Get the comment of the private function
+    SELECT obj_description(private_function.proname::regprocedure, 'pg_proc') INTO function_comment;
+
+    -- Create the pass-through function in the public schema
+    function_definition := format(
+      $def$
+        CREATE OR REPLACE FUNCTION %I.%I(%s)
+        RETURNS %s AS
+        $BODY$
+        BEGIN
+          RETURN %I(%s);
+        END;
+        $BODY$
+        LANGUAGE plpgsql
+        SECURITY DEFINER;
+      $def$,
+      public_schema_name,
+      public_function_name,
+      regexp_replace(private_function.arg_types, '\w+', 'arg', 'g'),
+      CASE private_function.prokind
+        WHEN 'f' THEN 'SETOF ' || split_part(private_function.prosrc, ' ', 3)
+        ELSE split_part(private_function.prosrc, ' ', 3)
+      END,
+      private_function.proname,
+      regexp_replace(private_function.arg_types, '\w+', 'arg', 'g')
+    );
+
+    -- Execute the function definition
+    EXECUTE function_definition;
+
+    -- Set the comment on the public function
+    IF function_comment IS NOT NULL THEN
+      EXECUTE format('COMMENT ON FUNCTION %I.%I(%s) IS %L',
+                     public_schema_name, public_function_name, private_function.arg_types, function_comment);
+    END IF;
+  END LOOP;
+END;
+$$ LANGUAGE plpgsql;
+```
+
+This function does the following:
+
+1. Creates the public schema if it doesn't exist.
+2. Iterates over the private functions starting with 'stack' and not containing 'trigger_func' in the name.
+3. Transforms the function name for the public function by replacing 'stack_' with 'api_' or 'stack_wf_' with 'api_wf_'.
+4. Retrieves the comment of the private function.
+5. Constructs the pass-through function definition in the public schema using the transformed function name and the argument types of the private function.
+6. Executes the function definition to create the public function.
+7. Sets the comment on the public function if the private function has a comment.
+
+The function uses dynamic SQL to create the public functions based on the private functions' definitions and argument types.
+
+Let me know if you have any further questions or if you need any additional assistance!

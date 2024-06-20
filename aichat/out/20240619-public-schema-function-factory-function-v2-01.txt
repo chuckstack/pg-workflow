@@ -1,0 +1,50 @@
+The error is due to a syntax issue in the generated function definition. The `RETURNS SETOF` clause is missing the return type. You need to specify the return type after `RETURNS SETOF`.
+
+To fix this, you can modify the `function_definition` variable to include the return type. Here's the updated code:
+
+```sql
+function_definition := format(
+  $f$
+  CREATE OR REPLACE FUNCTION api.%I(%s)
+  RETURNS SETOF %s AS
+  $BODY$
+  BEGIN
+    RETURN %s(%s);
+  END;
+  $BODY$
+  LANGUAGE plpgsql
+  SECURITY DEFINER;
+  $f$,
+  public_function_name,
+  argument_list,
+  return_type,
+  private_function_name,
+  argument_names
+);
+```
+
+In this updated code, we introduce a new variable `return_type` to store the return type of the function. We then include this `return_type` variable in the `RETURNS SETOF` clause of the function definition.
+
+To obtain the return type, you can modify the query that retrieves the function information to include the return type. Update the query as follows:
+
+```sql
+query := format(
+  $q$
+  SELECT proargnames, string_agg(format_type(t.oid, NULL), ', ' ORDER BY a.idx), p.prorettype::regtype::text
+  FROM pg_proc p
+  JOIN pg_namespace n ON p.pronamespace = n.oid
+  JOIN unnest(p.proargtypes) WITH ORDINALITY a(oid, idx) ON true
+  JOIN pg_type t ON a.oid = t.oid
+  WHERE n.nspname = $1 AND p.proname = $2
+  GROUP BY p.proargnames, p.prorettype
+  $q$,
+  schema_name,
+  private_function_name
+);
+```
+
+In this updated query, we select `p.prorettype::regtype::text` to retrieve the return type of the function as text.
+
+With these changes, the `function_definition` variable should generate the correct function definition with the return type included in the `RETURNS SETOF` clause.
+
+Let me know if you have any further questions!
