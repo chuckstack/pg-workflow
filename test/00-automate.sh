@@ -36,12 +36,12 @@ echo '-------end migration-30-------'
 
 echo '-------begin migration-30-execute-views-------'
 echo "psql_test: $psql_test"
-psql $psql_test -c "select $TEST_SCHEMA.create_public_views()"
+psql $psql_test -c "select $TEST_SCHEMA.create_public_views('$TEST_SCHEMA_API')"
 echo '-------end migration-30-execute-views-------'
 
 echo '-------begin migration-30-execute-functions-------'
 echo "psql_test: $psql_test"
-psql $psql_test -c "select $TEST_SCHEMA.create_public_functions()"
+psql $psql_test -c "select $TEST_SCHEMA.create_public_functions('$TEST_SCHEMA_API')"
 echo '-------end migration-30-execute-functions-------'
 
 echo '-------begin migration-40-------'
