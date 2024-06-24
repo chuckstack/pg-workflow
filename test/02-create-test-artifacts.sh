@@ -10,10 +10,8 @@ cd $TEST_SCRIPTPATH
 source test.properties
 
 psql_su="$TEST_PSQL_HOST $TEST_PSQL_ERR_STOP $TEST_PSQL_USER_ADMIN $TEST_PSQL_DB_ADMIN"
-psql_su_test="$TEST_PSQL_HOST $TEST_PSQL_ERR_STOP $TEST_PSQL_USER_ADMIN $TEST_PSQL_DB"
 psql_test="$TEST_PSQL_HOST $TEST_PSQL_ERR_STOP $TEST_PSQL_USER $TEST_PSQL_DB"
 echo "psql_su: $psql_su"
-echo "psql_su_test: $psql_su_test"
 echo "psql_test: $psql_test"
 
 #echo '-------begin xxx-------'
@@ -34,5 +32,26 @@ psql $psql_test -c " alter default privileges in schema $TEST_SCHEMA grant selec
 psql $psql_test -c " create schema $TEST_SCHEMA_API "
 psql $psql_test -c " grant usage on schema $TEST_SCHEMA_API to $TEST_USER_PREST_ANON "
 psql $psql_test -c " grant all on all tables in schema $TEST_SCHEMA_API to $TEST_USER_PREST_ANON "
+psql $psql_test -c " alter default privileges in schema $TEST_SCHEMA_API grant select on tables to $TEST_USER_PREST_ANON "
 
 psql $psql_test -c " alter role $TEST_USER set search_path to $TEST_SCHEMA,$TEST_SCHEMA_API "
+
+echo 'db-uri = "postgres://'$TEST_USER_PREST_AUTH':'$TEST_USER_PREST_AUTH_PASSWORD'@localhost:5432/'$TEST_DB'"' | tee $TEST_HOST_PREST_CONFIG_NAME
+echo 'db-schemas = "'$TEST_SCHEMA_API'"' | tee -a $TEST_HOST_PREST_CONFIG_NAME
+echo 'db-anon-role = "'$TEST_USER_PREST_ANON'"' | tee -a $TEST_HOST_PREST_CONFIG_NAME
+
+if [[ -e $TEST_HOST_PREST_SERVICE  ]]; then
+	echo service file exists.
+else
+	echo downloading service file
+	rm -f $TEST_HOST_PREST_FILE
+	wget $TEST_HOST_PREST_URL
+	tar xJf $TEST_HOST_PREST_FILE
+	rm -f $TEST_HOST_PREST_FILE
+fi
+
+scp $TEST_HOST_PREST_CONFIG_NAME $TEST_HOST_USER@$TEST_HOST:$TEST_HOST_PREST_CONFIG_PATH/.
+scp $TEST_HOST_PREST_SERVICE $TEST_HOST_USER@$TEST_HOST:$TEST_HOST_PREST_CONFIG_PATH/.
+rm -f $TEST_HOST_PREST_CONFIG_NAME
+
+ssh $TEST_HOST_USER@$TEST_HOST systemctl start postgrest

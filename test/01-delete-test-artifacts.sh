@@ -17,6 +17,8 @@ echo "psql_test: $psql_test"
 #echo '-------begin xxx-------'
 #echo '-------end xxx-------'
 
+ssh $TEST_HOST_USER@$TEST_HOST systemctl stop postgrest
+
 #SCHEMA_EXISTS=$(psql $psql_test $TEST_PSQL_VAR_ONLY -c "SELECT 1 FROM information_schema.schemata WHERE schema_name = 'private'")
 #echo $SCHEMA_EXISTS
 
