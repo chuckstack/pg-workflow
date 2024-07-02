@@ -113,7 +113,7 @@ BEGIN
       private_function.arg_names
     );
 
-    RAISE NOTICE 'function_definition: %', function_definition;
+    --RAISE NOTICE 'function_definition: %', function_definition;
 
     -- Execute the function definition
     EXECUTE function_definition;
