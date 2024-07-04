@@ -4,6 +4,7 @@ DECLARE
   private_table RECORD;
   public_view_name TEXT;
   table_comment TEXT;
+  column_list TEXT;
 BEGIN
   -- Create the public schema if it doesn't exist
   EXECUTE format('CREATE SCHEMA IF NOT EXISTS %I', public_schema_name);
@@ -24,10 +25,22 @@ BEGIN
 
     -- Get the comment of the private table
     SELECT obj_description(private_table.table_name::regclass, 'pg_class') INTO table_comment;
+    
+    -- Get columns
+    SELECT string_agg(
+      CASE
+        WHEN column_name LIKE 'stack%' THEN column_name  || ' AS ' || 'api' || substring(column_name, 6)
+        ELSE column_name
+      END,
+      ', '
+    )
+    INTO column_list
+    FROM information_schema.columns
+    WHERE table_schema = current_schema() AND table_name = private_table.table_name;
 
     -- Create the pass-through view in the public schema
-    EXECUTE format('CREATE OR REPLACE VIEW %I.%I AS SELECT * FROM %I.%I',
-                   public_schema_name, public_view_name, current_schema(), private_table.table_name);
+    EXECUTE format('CREATE OR REPLACE VIEW %I.%I AS SELECT %s FROM %I.%I',
+                   public_schema_name, public_view_name, column_list, current_schema(), private_table.table_name);
 
     -- Set the comment on the public view
     IF table_comment IS NOT NULL THEN
