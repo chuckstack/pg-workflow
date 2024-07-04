@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION create_public_views(public_schema_name TEXT DEFAULT 'api')
+CREATE OR REPLACE FUNCTION create_public_views(public_schema_name TEXT DEFAULT 'api', prefix_name TEXT DEFAULT '')
 RETURNS VOID AS $$
 DECLARE
   private_table RECORD;
@@ -17,11 +17,8 @@ BEGIN
   )
   LOOP
     -- Transform the table name for the public view
-    IF private_table.table_name LIKE 'stack_wf_%' THEN
-      public_view_name := 'api_wf_' || substring(private_table.table_name, 10);
-    ELSE
-      public_view_name := 'api_' || substring(private_table.table_name, 7);
-    END IF;
+    -- Note: this line assumes that the private table name starts with 'stack_'
+    public_view_name := prefix_name || substring(private_table.table_name, 7);
 
     -- Get the comment of the private table
     SELECT obj_description(private_table.table_name::regclass, 'pg_class') INTO table_comment;
@@ -29,7 +26,7 @@ BEGIN
     -- Get columns
     SELECT string_agg(
       CASE
-        WHEN column_name LIKE 'stack%' THEN column_name  || ' AS ' || 'api' || substring(column_name, 6)
+        WHEN column_name LIKE 'stack_%' THEN column_name  || ' AS ' || prefix_name || substring(column_name, 7)
         ELSE column_name
       END,
       ', '
@@ -52,7 +49,7 @@ END;
 $$ LANGUAGE plpgsql;
 
 
-CREATE OR REPLACE FUNCTION create_public_functions(public_schema_name TEXT DEFAULT 'api')
+CREATE OR REPLACE FUNCTION create_public_functions(public_schema_name TEXT DEFAULT 'api', prefix_name TEXT DEFAULT '')
 RETURNS VOID AS $$
 DECLARE
   private_function RECORD;
@@ -84,12 +81,8 @@ BEGIN
   )
   LOOP
     -- Transform the function name for the public function
-    IF private_function.proname LIKE 'stack_wf_%' THEN
-      public_function_name := 'api_wf_' || substring(private_function.proname, 10);
-    ELSE
-      public_function_name := 'api_' || substring(private_function.proname, 7);
-    END IF;
-
+    -- Note: this line assumes that the private function name starts with 'stack_'
+    public_function_name := prefix_name || substring(private_function.proname, 7);
     -- Get the comment of the private function
     SELECT obj_description(p.oid, 'pg_proc') INTO function_comment
     FROM pg_proc p
