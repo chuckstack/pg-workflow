@@ -58,3 +58,11 @@ echo "psql_test: $psql_test"
 psql $psql_test -c "NOTIFY pgrst, 'reload schema'"
 echo '-------end test reload postgrest schema-------'
 
+echo '-------begin test run sample nushell-------'
+sleep 1
+echo 'wait for schema refresh...'
+sleep 1
+echo 'wait for schema refresh...'
+sleep 1
+../nushell/sample.nu list
+echo '-------end test run sample nushell-------'
