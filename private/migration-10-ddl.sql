@@ -25,6 +25,7 @@
   -- consider using the column's description/comment to hold column_label and column_description
     -- comment on column wf_process.name is '{"column_label": "Name", "column_description": "Name describing the record"}';
     -- select pg_catalog.col_description(c.oid, col.ordinal_position::int)::json->>'column_label' ...
+    -- see sql/readme.md for more details
 
 --CREATE TABLE stack_xxx (
 --  stack_xxx_uu UUID PRIMARY KEY DEFAULT gen_random_uuid(),
