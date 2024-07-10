@@ -1,5 +1,32 @@
 # Nushell Notes
 
+## Sample Nu script
+
+Here is that is important:
+- acts as both bash script and nu module
+- when in nushell, issue the following to bring into scope
+  - use greetings
+- make file executable
+- https://discord.com/channels/601130461678272522/1259580889218678975/1259580889218678975
+
+greetings.nu
+```nu
+#!/usr/bin/env nu
+# Module description goes here...
+# creating world peace
+
+# creating world peace
+export def main [] { 
+    help main # prefer to use: help greeting
+}
+
+# informal salutations
+export def hi [name: string] { 
+    $"Hello ($name)" 
+}
+alias "main hi" = hi # must be defined after the namesake command definition
+```
+
 ## Read with resource embedding
 - http get "http://10.178.252.176:3000/api_wf_process?select=name,description,api_wf_process_type(name)"
 

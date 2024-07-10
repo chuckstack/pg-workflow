@@ -1,6 +1,7 @@
 #!/usr/bin/env nu
 
 # ref: 20240704-nushell-create-crud.txt
+# not tested - simply created by ai - delete when no longer valuable
 
 # A CLI tool for interacting with a REST service
 def main [
