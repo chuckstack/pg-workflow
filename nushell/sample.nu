@@ -4,19 +4,30 @@
 #print $"config says ($config.database.IP)"
 
 # sample subcommand to list stuff
-def "list" [] {
-    http get "http://10.178.252.176:3000/wf_process?select=name,description,...wf_process_type(process_type:name)"
+export def "list" [] {
+    let config = init 
+    #print $"config says IP:port is: ($config.database.IP):($config.database.port)"
+    http get $"http://($config.database.IP):($config.database.port)/wf_process?select=name,description,...wf_process_type\(process_type:name)"
 }
 alias "main list" = list
 
 # sample additional sub command
-def "insert" [] {
+export def "insert" [] {
     print "inserting"
 }
 alias "main insert" = insert
 
-# entry point for script - returns help
+# entry point for script - returns help on inself
 export def main [] {
-    help main # Return useful information
+    help main
+}
+
+def init [] {
+    open config.toml # returned from command
+
+    # Note: the following allows for debugging
+    #let config = open config.toml
+    #print $"config says IP: ($config.database.IP):($config.database.port)"
+    #$config
 }
 
