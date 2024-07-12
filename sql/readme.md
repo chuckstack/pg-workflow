@@ -1,6 +1,6 @@
 # misc notes about sql
 
-## setting and reading json column comments/description
+## setting and reading json column comments/description (table or view)
 
 COMMENT ON COLUMN wf_process.name IS '{"column_label": "Name", "column_description": "Name describing the record"}';
 
