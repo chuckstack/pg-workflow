@@ -1,6 +1,6 @@
 #!/usr/bin/env nu
 
-# sample subcommand to list stuff
+# list records from table
 export def "list" [
     --table_name (-t): string       # Example: wf_process
     --column_names (-c): string     # Example: "name,description,...wf_process_type(process_type:name)"
@@ -36,6 +36,11 @@ export def "list" [
     # do-it
     #print $"DEBUG config says IP:port is: ($config.database.IP):($config.database.port)"
     http get $"http://($config.database.IP):($config.database.port)/($table_name)($x_col_name)"
+
+    # sample execution
+    # ./sample.nu list -t wf_activity
+    # ./sample.nu list -t wf_process
+    # ./sample.nu list -t wf_action
 }
 alias "main list" = list
 
