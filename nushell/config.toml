@@ -1,3 +1,6 @@
 [database]
-IP = "10.178.252.176"
-port = "3000"
+IP = '10.178.252.176'
+port = '3000'
+
+[columns]
+wf_process = 'name,description,...wf_process_type(process_type:name)'
