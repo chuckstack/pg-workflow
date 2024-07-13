@@ -4,3 +4,4 @@ port = '3000'
 
 [columns]
 wf_process = 'name,description,...wf_process_type(process_type:name)'
+wf_action = 'description'

@@ -3,7 +3,7 @@
 # sample subcommand to list stuff
 export def "list" [
     --table_name (-t): string       # Example: wf_process
-    --column_names (-c): string     # Example: name,description,...wf_process_type(process_type:name)
+    --column_names (-c): string     # Example: "name,description,...wf_process_type(process_type:name)"
 ] {
     # prepare-it
     let config = init 
@@ -16,9 +16,13 @@ export def "list" [
 
     # try getting preferred columns from config
     try {
-        $x_col_name = $config.columns."wf_process" # TODO: needs to pull from $table_name
+        let temp_col_name = $config | get columns | get $table_name # TODO: determine why need temp var : https://discord.com/channels/601130461678272522/1261486672797892698/1261486672797892698
+        $x_col_name = $temp_col_name
+        #print $"DEBUG y_col_name_inner1: ($temp_col_name)"
+        #print $"DEBUG x_col_name_inner1: ($x_col_name)"
+
     } 
-    print $"DEBUG x_col_name1: ($x_col_name)"
+    #print $"DEBUG x_col_name1: ($x_col_name)"
 
     if $column_names != null {
         $x_col_name = $"?select=($column_names)" # pull from flag
