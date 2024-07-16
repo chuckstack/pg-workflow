@@ -8,41 +8,39 @@ export def "list" [
     # prepare-it
     let config = init 
     
-    if $table_name == null {
+    if ($table_name | is-empty) {
         error make {msg: "table_name is required"}
     }
 
-    mut x_col_name = ""
+    # variable to hold resulting column names
+    mut result_column_names = ""
 
-    # try getting preferred columns from config
-    try {
-        let temp_col_name = $config | get columns | get $table_name # TODO: determine why need temp var : https://discord.com/channels/601130461678272522/1261486672797892698/1261486672797892698
-        $x_col_name = $temp_col_name
-        #print $"DEBUG y_col_name_inner1: ($temp_col_name)"
-        #print $"DEBUG x_col_name_inner1: ($x_col_name)"
+    $result_column_names = ($config.columns | get -i $table_name)
+    #print $"DEBUG result_column_names1: ($result_column_names)"
 
-    } 
-    #print $"DEBUG x_col_name1: ($x_col_name)"
-
-    if $column_names != null {
-        $x_col_name = $"?select=($column_names)" # pull from flag
-    } else if $x_col_name != "" {
-        $x_col_name = $"?select=($x_col_name)" # pull from property file
+    if ($column_names | is-not-empty) {
+        #print "DEBUG case: column_names not empty"
+        $result_column_names = $"?select=($column_names)" # pull from flag
+    } else if ($result_column_names | is-not-empty) {
+        #print $"DEBUG case: result_column_names not empty"
+        $result_column_names = $"?select=($result_column_names)" # pull from property file
     } else {
-        $x_col_name = "?select=name" # default case
+        #print "DEBUG case: default"
+        $result_column_names = "?select=name" # default case
     }
-    #print $"DEBUG x_col_name2: ($x_col_name)"
+    #print $"DEBUG result_column_names2: ($result_column_names)"
 
     # do-it
     #print $"DEBUG config says IP:port is: ($config.database.IP):($config.database.port)"
-    http get $"http://($config.database.IP):($config.database.port)/($table_name)($x_col_name)"
+    http get $"http://($config.database.IP):($config.database.port)/($table_name)($result_column_names)"
 
-    # sample execution
-    # ./sample.nu list -t wf_activity
-    # ./sample.nu list -t wf_process
-    # ./sample.nu list -t wf_action
 }
 alias "main list" = list
+# sample execution/test
+# ./sample.nu list -t wf_activity                       # default
+# ./sample.nu list -t wf_process                        # found in file
+# ./sample.nu list -t wf_process -c name,description    # found in file but overridden
+# ./sample.nu list -t wf_action                         # found in file - description only
 
 # sample additional sub command
 export def "insert" [] {
